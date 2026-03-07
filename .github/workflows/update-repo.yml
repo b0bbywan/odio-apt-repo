@@ -76,37 +76,41 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          resolve_versions() {
-            local repo="$1" input_version="$2"
-            if [ -n "${input_version}" ]; then
-              # Manual override: classify by tag name
-              echo "${input_version}"
-              return
-            fi
-            # Fetch latest stable (non-prerelease) and latest prerelease
-            gh release list --repo "b0bbywan/${repo}" --limit 20 --json tagName,isPrerelease -q '
-              [
-                (map(select(.isPrerelease == false)) | first // empty | .tagName),
-                (map(select(.isPrerelease == true))  | first // empty | .tagName)
-              ] | .[]
-            ' 2>/dev/null || true
+          get_latest() {
+            local repo="$1" filter="$2"
+            gh release list --repo "b0bbywan/${repo}" --limit 20 --json tagName,isPrerelease \
+              | jq -r "[.[] | select(.isPrerelease == ${filter})] | first // empty | .tagName"
           }
 
-          # Each resolve_versions call outputs up to 2 lines: stable then RC
-          ODIO_VERSIONS=$(resolve_versions "go-odio-api" "${{ github.event.inputs.odio_version }}")
-          DISCPLAYER_VERSIONS=$(resolve_versions "go-mpd-discplayer" "${{ github.event.inputs.discplayer_version }}")
+          if [ -n "${{ github.event.inputs.odio_version }}" ]; then
+            ODIO_MANUAL="${{ github.event.inputs.odio_version }}"
+          fi
+          if [ -n "${{ github.event.inputs.discplayer_version }}" ]; then
+            DISCPLAYER_MANUAL="${{ github.event.inputs.discplayer_version }}"
+          fi
 
-          # Store as newline-separated lists
-          echo "ODIO_VERSIONS<<ENDOFVAR" >> "$GITHUB_ENV"
-          echo "${ODIO_VERSIONS}" >> "$GITHUB_ENV"
-          echo "ENDOFVAR" >> "$GITHUB_ENV"
+          # Stable versions
+          ODIO_STABLE="${ODIO_MANUAL:-$(get_latest go-odio-api false)}"
+          DISCPLAYER_STABLE="${DISCPLAYER_MANUAL:-$(get_latest go-mpd-discplayer false)}"
 
-          echo "DISCPLAYER_VERSIONS<<ENDOFVAR" >> "$GITHUB_ENV"
-          echo "${DISCPLAYER_VERSIONS}" >> "$GITHUB_ENV"
-          echo "ENDOFVAR" >> "$GITHUB_ENV"
+          # Testing versions (latest prerelease)
+          ODIO_TESTING="$(get_latest go-odio-api true)"
+          DISCPLAYER_TESTING="$(get_latest go-mpd-discplayer true)"
 
-          echo "go-odio-api versions: ${ODIO_VERSIONS:-none}"
-          echo "go-mpd-discplayer versions: ${DISCPLAYER_VERSIONS:-none}"
+          # If manual input is a prerelease, move it to testing instead
+          if echo "${ODIO_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
+            ODIO_TESTING="${ODIO_MANUAL}"
+            ODIO_STABLE="$(get_latest go-odio-api false)"
+          fi
+          if echo "${DISCPLAYER_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
+            DISCPLAYER_TESTING="${DISCPLAYER_MANUAL}"
+            DISCPLAYER_STABLE="$(get_latest go-mpd-discplayer false)"
+          fi
+
+          for var in ODIO_STABLE ODIO_TESTING DISCPLAYER_STABLE DISCPLAYER_TESTING; do
+            echo "${var}=${!var}" >> "$GITHUB_ENV"
+            echo "${var}=${!var}"
+          done
 
       - name: Download .deb packages
         env:
@@ -115,18 +119,12 @@ jobs:
           mkdir -p debs/stable debs/testing
 
           download_debs() {
-            local repo="$1" version="$2"
+            local repo="$1" version="$2" target="$3"
             if [ -z "${version}" ]; then
+              echo "⚠ Skipping ${repo} (${target}): no version"
               return
             fi
-
-            # Route to testing if tag contains -rc, -beta, -alpha
-            local target="stable"
-            if echo "${version}" | grep -qE '-(rc|beta|alpha)'; then
-              target="testing"
-            fi
-
-            echo "⬇ Downloading ${repo} ${version} → ${target}"
+            echo "⬇ ${repo} ${version} → ${target}"
             gh release download "${version}" \
               --repo "b0bbywan/${repo}" \
               --pattern "*.deb" \
@@ -134,14 +132,10 @@ jobs:
               --clobber
           }
 
-          # Download all resolved versions for each project
-          while IFS= read -r version; do
-            [ -n "${version}" ] && download_debs "go-odio-api" "${version}"
-          done <<< "${ODIO_VERSIONS}"
-
-          while IFS= read -r version; do
-            [ -n "${version}" ] && download_debs "go-mpd-discplayer" "${version}"
-          done <<< "${DISCPLAYER_VERSIONS}"
+          download_debs "go-odio-api" "${ODIO_STABLE}" "stable"
+          download_debs "go-odio-api" "${ODIO_TESTING}" "testing"
+          download_debs "go-mpd-discplayer" "${DISCPLAYER_STABLE}" "stable"
+          download_debs "go-mpd-discplayer" "${DISCPLAYER_TESTING}" "testing"
 
           echo "Stable packages:"
           ls -lh debs/stable/ 2>/dev/null || echo "  (none)"
