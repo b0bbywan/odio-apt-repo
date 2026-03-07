@@ -11,6 +11,8 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 
 ## User Install
 
+### Stable releases
+
 ```bash
 # Add GPG key
 curl -fsSL https://apt.odio.love/key.gpg \
@@ -24,6 +26,19 @@ echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love stable 
 sudo apt update
 sudo apt install go-odio-api go-mpd-discplayer
 ```
+
+### Testing (release candidates)
+
+```bash
+# Add testing repo (after adding the GPG key above)
+echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love testing main" \
+  | sudo tee /etc/apt/sources.list.d/odio-testing.list
+
+sudo apt update
+sudo apt install go-odio-api
+```
+
+Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goes to `stable`.
 
 ## How it works
 

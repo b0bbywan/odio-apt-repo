@@ -55,7 +55,15 @@ jobs:
           Codename: stable
           Architectures: amd64 arm64 armhf armv7hf
           Components: main
-          Description: APT repository for Odio ecosystem packages
+          Description: Odio stable releases
+          SignWith: ${GPG_KEY_ID}
+
+          Origin: b0bbywan
+          Label: Odio APT Repository
+          Codename: testing
+          Architectures: amd64 arm64 armhf armv7hf
+          Components: main
+          Description: Odio release candidates and pre-releases
           SignWith: ${GPG_KEY_ID}
           EOF
 
@@ -68,64 +76,98 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          resolve_version() {
+          resolve_versions() {
             local repo="$1" input_version="$2"
             if [ -n "${input_version}" ]; then
+              # Manual override: classify by tag name
               echo "${input_version}"
-            else
-              gh release view --repo "b0bbywan/${repo}" --json tagName -q '.tagName' 2>/dev/null || echo ""
+              return
             fi
+            # Fetch latest stable (non-prerelease) and latest prerelease
+            gh release list --repo "b0bbywan/${repo}" --limit 20 --json tagName,isPrerelease -q '
+              [
+                (map(select(.isPrerelease == false)) | first // empty | .tagName),
+                (map(select(.isPrerelease == true))  | first // empty | .tagName)
+              ] | .[]
+            ' 2>/dev/null || true
           }
 
-          ODIO_VERSION=$(resolve_version "go-odio-api" "${{ github.event.inputs.odio_version }}")
-          DISCPLAYER_VERSION=$(resolve_version "go-mpd-discplayer" "${{ github.event.inputs.discplayer_version }}")
+          # Each resolve_versions call outputs up to 2 lines: stable then RC
+          ODIO_VERSIONS=$(resolve_versions "go-odio-api" "${{ github.event.inputs.odio_version }}")
+          DISCPLAYER_VERSIONS=$(resolve_versions "go-mpd-discplayer" "${{ github.event.inputs.discplayer_version }}")
 
-          echo "ODIO_VERSION=${ODIO_VERSION}" >> "$GITHUB_ENV"
-          echo "DISCPLAYER_VERSION=${DISCPLAYER_VERSION}" >> "$GITHUB_ENV"
-          echo "go-odio-api: ${ODIO_VERSION:-not found}"
-          echo "go-mpd-discplayer: ${DISCPLAYER_VERSION:-not found}"
+          # Store as newline-separated lists
+          echo "ODIO_VERSIONS<<ENDOFVAR" >> "$GITHUB_ENV"
+          echo "${ODIO_VERSIONS}" >> "$GITHUB_ENV"
+          echo "ENDOFVAR" >> "$GITHUB_ENV"
+
+          echo "DISCPLAYER_VERSIONS<<ENDOFVAR" >> "$GITHUB_ENV"
+          echo "${DISCPLAYER_VERSIONS}" >> "$GITHUB_ENV"
+          echo "ENDOFVAR" >> "$GITHUB_ENV"
+
+          echo "go-odio-api versions: ${ODIO_VERSIONS:-none}"
+          echo "go-mpd-discplayer versions: ${DISCPLAYER_VERSIONS:-none}"
 
       - name: Download .deb packages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p debs
+          mkdir -p debs/stable debs/testing
 
           download_debs() {
             local repo="$1" version="$2"
             if [ -z "${version}" ]; then
-              echo "⚠ Skipping ${repo}: no version found"
               return
             fi
-            echo "⬇ Downloading ${repo} ${version}..."
+
+            # Route to testing if tag contains -rc, -beta, -alpha
+            local target="stable"
+            if echo "${version}" | grep -qE '-(rc|beta|alpha)'; then
+              target="testing"
+            fi
+
+            echo "⬇ Downloading ${repo} ${version} → ${target}"
             gh release download "${version}" \
               --repo "b0bbywan/${repo}" \
               --pattern "*.deb" \
-              --dir debs/ \
+              --dir "debs/${target}/" \
               --clobber
           }
 
-          download_debs "go-odio-api" "${ODIO_VERSION}"
-          download_debs "go-mpd-discplayer" "${DISCPLAYER_VERSION}"
+          # Download all resolved versions for each project
+          while IFS= read -r version; do
+            [ -n "${version}" ] && download_debs "go-odio-api" "${version}"
+          done <<< "${ODIO_VERSIONS}"
 
-          echo "Downloaded packages:"
-          ls -lh debs/ || echo "No packages found"
+          while IFS= read -r version; do
+            [ -n "${version}" ] && download_debs "go-mpd-discplayer" "${version}"
+          done <<< "${DISCPLAYER_VERSIONS}"
+
+          echo "Stable packages:"
+          ls -lh debs/stable/ 2>/dev/null || echo "  (none)"
+          echo "Testing packages:"
+          ls -lh debs/testing/ 2>/dev/null || echo "  (none)"
 
       - name: Build repository
         run: |
           mkdir -p repo
           cp -r conf repo/
 
-          for deb in debs/*.deb; do
+          for deb in debs/stable/*.deb; do
             [ -f "${deb}" ] || continue
-            echo "Adding $(basename ${deb})..."
+            echo "Adding $(basename ${deb}) → stable"
             reprepro -b repo includedeb stable "${deb}"
+          done
+
+          for deb in debs/testing/*.deb; do
+            [ -f "${deb}" ] || continue
+            echo "Adding $(basename ${deb}) → testing"
+            reprepro -b repo includedeb testing "${deb}"
           done
 
           # Export public GPG key
           gpg --armor --export "${GPG_KEY_ID}" > repo/key.gpg
 
-          # Generate install instructions
           # CNAME for custom domain
           echo "apt.odio.love" > repo/CNAME
 
@@ -134,11 +176,13 @@ jobs:
           <html><head><title>Odio APT Repository</title></head>
           <body>
           <h1>Odio APT Repository</h1>
-          <h2>Quick Install</h2>
+          <h2>Stable</h2>
           <pre><code>curl -fsSL https://apt.odio.love/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/odio.gpg
           echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love stable main" | sudo tee /etc/apt/sources.list.d/odio.list
           sudo apt update
           sudo apt install go-odio-api go-mpd-discplayer</code></pre>
+          <h2>Testing (release candidates)</h2>
+          <pre><code>echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love testing main" | sudo tee /etc/apt/sources.list.d/odio-testing.list</code></pre>
           </body></html>
           HTMLEOF
 
