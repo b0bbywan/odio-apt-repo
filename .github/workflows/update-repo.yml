@@ -155,6 +155,11 @@ jobs:
 
           for deb in debs/testing/*.deb; do
             [ -f "${deb}" ] || continue
+            basename=$(basename "${deb}")
+            if [ -f "debs/stable/${basename}" ]; then
+              echo "⚠ Skipping $(basename ${deb}) → testing (same filename already in stable, likely same commit tagged twice)"
+              continue
+            fi
             echo "Adding $(basename ${deb}) → testing"
             reprepro -b repo includedeb testing "${deb}"
           done
