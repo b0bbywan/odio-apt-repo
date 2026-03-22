@@ -14,6 +14,9 @@ on:
       discplayer_version:
         description: "go-mpd-discplayer version (e.g. v0.8.0) — leave empty to use latest"
         required: false
+      spotifyd_version:
+        description: "spotifyd version (e.g. v0.3.5) — leave empty to use latest"
+        required: false
 
   # Rebuild nightly to catch any missed releases
   schedule:
@@ -88,14 +91,19 @@ jobs:
           if [ -n "${{ github.event.inputs.discplayer_version }}" ]; then
             DISCPLAYER_MANUAL="${{ github.event.inputs.discplayer_version }}"
           fi
+          if [ -n "${{ github.event.inputs.spotifyd_version }}" ]; then
+            SPOTIFYD_MANUAL="${{ github.event.inputs.spotifyd_version }}"
+          fi
 
           # Stable versions
           ODIO_STABLE="${ODIO_MANUAL:-$(get_latest go-odio-api false)}"
           DISCPLAYER_STABLE="${DISCPLAYER_MANUAL:-$(get_latest go-mpd-discplayer false)}"
+          SPOTIFYD_STABLE="${SPOTIFYD_MANUAL:-$(get_latest spotifyd false)}"
 
           # Testing versions (latest prerelease)
           ODIO_TESTING="$(get_latest go-odio-api true)"
           DISCPLAYER_TESTING="$(get_latest go-mpd-discplayer true)"
+          SPOTIFYD_TESTING="$(get_latest spotifyd true)"
 
           # If manual input is a prerelease, move it to testing instead
           if echo "${ODIO_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
@@ -106,8 +114,12 @@ jobs:
             DISCPLAYER_TESTING="${DISCPLAYER_MANUAL}"
             DISCPLAYER_STABLE="$(get_latest go-mpd-discplayer false)"
           fi
+          if echo "${SPOTIFYD_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
+            SPOTIFYD_TESTING="${SPOTIFYD_MANUAL}"
+            SPOTIFYD_STABLE="$(get_latest spotifyd false)"
+          fi
 
-          for var in ODIO_STABLE ODIO_TESTING DISCPLAYER_STABLE DISCPLAYER_TESTING; do
+          for var in ODIO_STABLE ODIO_TESTING DISCPLAYER_STABLE DISCPLAYER_TESTING SPOTIFYD_STABLE SPOTIFYD_TESTING; do
             echo "${var}=${!var}" >> "$GITHUB_ENV"
             echo "${var}=${!var}"
           done
@@ -136,6 +148,8 @@ jobs:
           download_debs "go-odio-api" "${ODIO_TESTING}" "testing"
           download_debs "go-mpd-discplayer" "${DISCPLAYER_STABLE}" "stable"
           download_debs "go-mpd-discplayer" "${DISCPLAYER_TESTING}" "testing"
+          download_debs "spotifyd" "${SPOTIFYD_STABLE}" "stable"
+          download_debs "spotifyd" "${SPOTIFYD_TESTING}" "testing"
 
           echo "Stable packages:"
           ls -lh debs/stable/ 2>/dev/null || echo "  (none)"
