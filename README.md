@@ -1,3 +1,26 @@
+<p align="center">
+  <a href="https://odio.love"><img src="https://odio.love/logo.png" alt="odio" width="160" /></a>   
+  </p>
+  <h1 align="center">odio-apt-repo</h1>
+  <p align="center"><em>Automated APT repository for the odio ecosystem.</em></p>
+  <p align="center">
+  <a href="https://github.com/b0bbywan/odio-apt-repo/actions/workflows/update-repo.yml"><img src="https://github.com/b0bbywan/odio-apt-repo/actions/workflows/update-repo.yml/badge.svg" alt="Update APT Repository"
+   /></a>   
+  <a href="https://github.com/sponsors/b0bbywan"><img src="https://img.shields.io/github/sponsors/b0bbywan?label=Sponsor&logo=GitHub" alt="GitHub Sponsors" /></a>
+  </p>
+  <p align="center">
+  <a href="https://apt.odio.love"><img src="https://img.shields.io/badge/Live%20repo-5ab81e" alt="Live at apt.odio.love" /></a>
+  <a href="https://docs.odio.love/api/installation/"><img src="https://img.shields.io/badge/Install%20guide-0082FC" alt="Install guide" /></a>   
+  </p>
+  <p align="center">   
+  Part of the <a href="https://odio.love">odio</a> project — <a href="https://docs.odio.love/api/installation/">full documentation</a>.
+  </p>
+  <p align="center">
+  <a href="https://www.debian.org/"><img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=white" alt="Debian" /></a>
+  <a href="https://pages.github.com/"><img src="https://img.shields.io/badge/GitHub%20Pages-181717?logo=githubpages&logoColor=white" alt="GitHub Pages" /></a>
+  <a href="https://github.com/features/actions"><img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" /></a>   
+  </p>
+
 # Odio APT Repository
 
 Automated APT repository for the Odio ecosystem, served via GitHub Pages.
