@@ -33,6 +33,7 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 | `go-mpd-discplayer` | [b0bbywan/go-mpd-discplayer](https://github.com/b0bbywan/go-mpd-discplayer) |
 | `spotifyd` | [b0bbywan/spotifyd](https://github.com/b0bbywan/spotifyd) |
 | `mympd` | [b0bbywan/odio-mympd](https://github.com/b0bbywan/odio-mympd) (build of upstream [jcorporation/myMPD](https://github.com/jcorporation/myMPD)) |
+| `mpdris2` | [b0bbywan/mpDris2](https://github.com/b0bbywan/mpDris2) |
 
 ## User Install
 
@@ -49,7 +50,7 @@ echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love stable 
 
 # Install
 sudo apt update
-sudo apt install go-odio-api go-mpd-discplayer
+sudo apt install go-odio-api go-mpd-discplayer spotifyd mympd mpdris2
 ```
 
 ### Testing (release candidates)
@@ -67,13 +68,13 @@ Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goe
 
 ## How it works
 
-1. `go-odio-api` or `go-mpd-discplayer` publishes a GitHub Release with `.deb` artifacts
-2. Their CI triggers a `repository_dispatch` on this repo
-3. This repo's CI downloads all `.deb` from both projects' latest releases
-4. `reprepro` builds the APT repository metadata
+1. A source project (`go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, or `mpDris2`) publishes a GitHub Release with `.deb` artifacts
+2. Its CI triggers a `repository_dispatch` on this repo
+3. This repo's CI downloads all `.deb` from each source project's latest stable and prerelease tags
+4. `reprepro` builds the APT repository metadata for both `stable` and `testing` suites
 5. GitHub Pages serves the result
 
-No binaries stored in git. Source projects remain the single source of truth.
+A weekly scheduled rebuild (Monday 04:00 UTC) catches any missed releases. No binaries stored in git — source projects remain the single source of truth.
 
 ## Setup (one-time)
 
@@ -100,7 +101,7 @@ gpg --armor --export-secret-keys "apt@odio.love"
 | Secret | Where | Description |
 |--------|-------|-------------|
 | `GPG_PRIVATE_KEY` | `apt-repo` | GPG private key for signing |
-| `APT_REPO_TOKEN` | `go-odio-api` + `go-mpd-discplayer` | PAT with `repo` scope to trigger dispatch |
+| `APT_REPO_TOKEN` | `go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `mpDris2` | PAT with `repo` scope to trigger dispatch |
 
 ### 3. Enable GitHub Pages
 
@@ -116,7 +117,14 @@ Add the job from `trigger-snippet.yml` to the release workflow of each source pr
 gh workflow run update-repo.yml
 ```
 
-Or with specific versions:
+Or with specific versions (any subset of inputs):
 ```
-gh workflow run update-repo.yml -f odio_version=v0.9.0 -f discplayer_version=v0.8.0
+gh workflow run update-repo.yml \
+  -f odio_version=v0.9.0 \
+  -f discplayer_version=v0.8.0 \
+  -f spotifyd_version=v0.3.5 \
+  -f mympd_version=v25.0.1 \
+  -f mpdris2_version=v0.9.2
 ```
+
+If a manually supplied version contains `-rc`, `-beta`, or `-alpha`, it is routed to `testing` and the latest stable for that package is kept in `stable`.
