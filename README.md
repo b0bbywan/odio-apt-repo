@@ -32,6 +32,7 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 | `go-odio-api` | [b0bbywan/go-odio-api](https://github.com/b0bbywan/go-odio-api) |
 | `go-mpd-discplayer` | [b0bbywan/go-mpd-discplayer](https://github.com/b0bbywan/go-mpd-discplayer) |
 | `spotifyd` | [b0bbywan/spotifyd](https://github.com/b0bbywan/spotifyd) |
+| `mympd` | [b0bbywan/odio-mympd](https://github.com/b0bbywan/odio-mympd) (build of upstream [jcorporation/myMPD](https://github.com/jcorporation/myMPD)) |
 
 ## User Install
 

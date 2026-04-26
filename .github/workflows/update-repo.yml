@@ -17,6 +17,9 @@ on:
       spotifyd_version:
         description: "spotifyd version (e.g. v0.3.5) — leave empty to use latest"
         required: false
+      mympd_version:
+        description: "odio-mympd version (e.g. v25.0.1) — leave empty to use latest"
+        required: false
 
   # Rebuild nightly to catch any missed releases
   schedule:
@@ -94,16 +97,21 @@ jobs:
           if [ -n "${{ github.event.inputs.spotifyd_version }}" ]; then
             SPOTIFYD_MANUAL="${{ github.event.inputs.spotifyd_version }}"
           fi
+          if [ -n "${{ github.event.inputs.mympd_version }}" ]; then
+            MYMPD_MANUAL="${{ github.event.inputs.mympd_version }}"
+          fi
 
           # Stable versions
           ODIO_STABLE="${ODIO_MANUAL:-$(get_latest go-odio-api false)}"
           DISCPLAYER_STABLE="${DISCPLAYER_MANUAL:-$(get_latest go-mpd-discplayer false)}"
           SPOTIFYD_STABLE="${SPOTIFYD_MANUAL:-$(get_latest spotifyd false)}"
+          MYMPD_STABLE="${MYMPD_MANUAL:-$(get_latest odio-mympd false)}"
 
           # Testing versions (latest prerelease)
           ODIO_TESTING="$(get_latest go-odio-api true)"
           DISCPLAYER_TESTING="$(get_latest go-mpd-discplayer true)"
           SPOTIFYD_TESTING="$(get_latest spotifyd true)"
+          MYMPD_TESTING="$(get_latest odio-mympd true)"
 
           # If manual input is a prerelease, move it to testing instead
           if echo "${ODIO_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
@@ -118,8 +126,12 @@ jobs:
             SPOTIFYD_TESTING="${SPOTIFYD_MANUAL}"
             SPOTIFYD_STABLE="$(get_latest spotifyd false)"
           fi
+          if echo "${MYMPD_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
+            MYMPD_TESTING="${MYMPD_MANUAL}"
+            MYMPD_STABLE="$(get_latest odio-mympd false)"
+          fi
 
-          for var in ODIO_STABLE ODIO_TESTING DISCPLAYER_STABLE DISCPLAYER_TESTING SPOTIFYD_STABLE SPOTIFYD_TESTING; do
+          for var in ODIO_STABLE ODIO_TESTING DISCPLAYER_STABLE DISCPLAYER_TESTING SPOTIFYD_STABLE SPOTIFYD_TESTING MYMPD_STABLE MYMPD_TESTING; do
             echo "${var}=${!var}" >> "$GITHUB_ENV"
             echo "${var}=${!var}"
           done
@@ -150,6 +162,8 @@ jobs:
           download_debs "go-mpd-discplayer" "${DISCPLAYER_TESTING}" "testing"
           download_debs "spotifyd" "${SPOTIFYD_STABLE}" "stable"
           download_debs "spotifyd" "${SPOTIFYD_TESTING}" "testing"
+          download_debs "odio-mympd" "${MYMPD_STABLE}" "stable"
+          download_debs "odio-mympd" "${MYMPD_TESTING}" "testing"
 
           echo "Stable packages:"
           ls -lh debs/stable/ 2>/dev/null || echo "  (none)"
