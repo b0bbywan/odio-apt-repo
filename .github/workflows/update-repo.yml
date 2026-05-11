@@ -23,6 +23,9 @@ on:
       mpdris2_version:
         description: "mpDris2 version (e.g. v0.9.2) — leave empty to use latest"
         required: false
+      snapcastmpris_version:
+        description: "snapcastmpris version (e.g. v1.0.1) — leave empty to use latest"
+        required: false
 
   # Rebuild nightly to catch any missed releases
   schedule:
@@ -106,6 +109,9 @@ jobs:
           if [ -n "${{ github.event.inputs.mpdris2_version }}" ]; then
             MPDRIS2_MANUAL="${{ github.event.inputs.mpdris2_version }}"
           fi
+          if [ -n "${{ github.event.inputs.snapcastmpris_version }}" ]; then
+            SNAPCASTMPRIS_MANUAL="${{ github.event.inputs.snapcastmpris_version }}"
+          fi
 
           # Stable versions
           ODIO_STABLE="${ODIO_MANUAL:-$(get_latest go-odio-api false)}"
@@ -113,6 +119,7 @@ jobs:
           SPOTIFYD_STABLE="${SPOTIFYD_MANUAL:-$(get_latest spotifyd false)}"
           MYMPD_STABLE="${MYMPD_MANUAL:-$(get_latest odio-mympd false)}"
           MPDRIS2_STABLE="${MPDRIS2_MANUAL:-$(get_latest mpDris2 false)}"
+          SNAPCASTMPRIS_STABLE="${SNAPCASTMPRIS_MANUAL:-$(get_latest snapcastmpris false)}"
 
           # Testing versions (latest prerelease)
           ODIO_TESTING="$(get_latest go-odio-api true)"
@@ -120,6 +127,7 @@ jobs:
           SPOTIFYD_TESTING="$(get_latest spotifyd true)"
           MYMPD_TESTING="$(get_latest odio-mympd true)"
           MPDRIS2_TESTING="$(get_latest mpDris2 true)"
+          SNAPCASTMPRIS_TESTING="$(get_latest snapcastmpris true)"
 
           # If manual input is a prerelease, move it to testing instead
           if echo "${ODIO_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
@@ -142,8 +150,12 @@ jobs:
             MPDRIS2_TESTING="${MPDRIS2_MANUAL}"
             MPDRIS2_STABLE="$(get_latest mpDris2 false)"
           fi
+          if echo "${SNAPCASTMPRIS_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
+            SNAPCASTMPRIS_TESTING="${SNAPCASTMPRIS_MANUAL}"
+            SNAPCASTMPRIS_STABLE="$(get_latest snapcastmpris false)"
+          fi
 
-          for var in ODIO_STABLE ODIO_TESTING DISCPLAYER_STABLE DISCPLAYER_TESTING SPOTIFYD_STABLE SPOTIFYD_TESTING MYMPD_STABLE MYMPD_TESTING MPDRIS2_STABLE MPDRIS2_TESTING; do
+          for var in ODIO_STABLE ODIO_TESTING DISCPLAYER_STABLE DISCPLAYER_TESTING SPOTIFYD_STABLE SPOTIFYD_TESTING MYMPD_STABLE MYMPD_TESTING MPDRIS2_STABLE MPDRIS2_TESTING SNAPCASTMPRIS_STABLE SNAPCASTMPRIS_TESTING; do
             echo "${var}=${!var}" >> "$GITHUB_ENV"
             echo "${var}=${!var}"
           done
@@ -178,6 +190,8 @@ jobs:
           download_debs "odio-mympd" "${MYMPD_TESTING}" "testing"
           download_debs "mpDris2" "${MPDRIS2_STABLE}" "stable"
           download_debs "mpDris2" "${MPDRIS2_TESTING}" "testing"
+          download_debs "snapcastmpris" "${SNAPCASTMPRIS_STABLE}" "stable"
+          download_debs "snapcastmpris" "${SNAPCASTMPRIS_TESTING}" "testing"
 
           echo "Stable packages:"
           ls -lh debs/stable/ 2>/dev/null || echo "  (none)"
