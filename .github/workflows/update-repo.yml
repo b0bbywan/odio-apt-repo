@@ -60,181 +60,30 @@ jobs:
 
       - name: Configure reprepro
         run: |
-          mkdir -p conf
-          cat > conf/distributions <<EOF
-          Origin: b0bbywan
-          Label: Odio APT Repository
-          Codename: stable
-          Architectures: amd64 arm64 armhf armv7hf
-          Components: main
-          Description: Odio stable releases
-          SignWith: ${GPG_KEY_ID}
-
-          Origin: b0bbywan
-          Label: Odio APT Repository
-          Codename: testing
-          Architectures: amd64 arm64 armhf armv7hf
-          Components: main
-          Description: Odio release candidates and pre-releases
-          SignWith: ${GPG_KEY_ID}
-          EOF
-
-          cat > conf/options <<EOF
-          verbose
-          basedir /home/runner/work/apt-repo/apt-repo/repo
-          EOF
+          ./scripts/build-apt-repo.sh configure \
+            --gpg-key-id "${GPG_KEY_ID}" \
+            --basedir "${GITHUB_WORKSPACE}/repo"
 
       - name: Resolve versions
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          get_latest() {
-            local repo="$1" filter="$2"
-            gh release list --repo "b0bbywan/${repo}" --limit 20 --json tagName,isPrerelease \
-              | jq -r "[.[] | select(.isPrerelease == ${filter})] | first // empty | .tagName"
-          }
-
-          if [ -n "${{ github.event.inputs.odio_version }}" ]; then
-            ODIO_MANUAL="${{ github.event.inputs.odio_version }}"
-          fi
-          if [ -n "${{ github.event.inputs.discplayer_version }}" ]; then
-            DISCPLAYER_MANUAL="${{ github.event.inputs.discplayer_version }}"
-          fi
-          if [ -n "${{ github.event.inputs.spotifyd_version }}" ]; then
-            SPOTIFYD_MANUAL="${{ github.event.inputs.spotifyd_version }}"
-          fi
-          if [ -n "${{ github.event.inputs.mympd_version }}" ]; then
-            MYMPD_MANUAL="${{ github.event.inputs.mympd_version }}"
-          fi
-          if [ -n "${{ github.event.inputs.mpdris2_version }}" ]; then
-            MPDRIS2_MANUAL="${{ github.event.inputs.mpdris2_version }}"
-          fi
-          if [ -n "${{ github.event.inputs.snapclientmpris_version }}" ]; then
-            SNAPCLIENTMPRIS_MANUAL="${{ github.event.inputs.snapclientmpris_version }}"
-          fi
-
-          # Stable versions
-          ODIO_STABLE="${ODIO_MANUAL:-$(get_latest go-odio-api false)}"
-          DISCPLAYER_STABLE="${DISCPLAYER_MANUAL:-$(get_latest go-mpd-discplayer false)}"
-          SPOTIFYD_STABLE="${SPOTIFYD_MANUAL:-$(get_latest spotifyd false)}"
-          MYMPD_STABLE="${MYMPD_MANUAL:-$(get_latest odio-mympd false)}"
-          MPDRIS2_STABLE="${MPDRIS2_MANUAL:-$(get_latest mpDris2 false)}"
-          SNAPCLIENTMPRIS_STABLE="${SNAPCLIENTMPRIS_MANUAL:-$(get_latest snapclientmpris false)}"
-
-          # Testing versions (latest prerelease)
-          ODIO_TESTING="$(get_latest go-odio-api true)"
-          DISCPLAYER_TESTING="$(get_latest go-mpd-discplayer true)"
-          SPOTIFYD_TESTING="$(get_latest spotifyd true)"
-          MYMPD_TESTING="$(get_latest odio-mympd true)"
-          MPDRIS2_TESTING="$(get_latest mpDris2 true)"
-          SNAPCLIENTMPRIS_TESTING="$(get_latest snapclientmpris true)"
-
-          # If manual input is a prerelease, move it to testing instead
-          if echo "${ODIO_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
-            ODIO_TESTING="${ODIO_MANUAL}"
-            ODIO_STABLE="$(get_latest go-odio-api false)"
-          fi
-          if echo "${DISCPLAYER_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
-            DISCPLAYER_TESTING="${DISCPLAYER_MANUAL}"
-            DISCPLAYER_STABLE="$(get_latest go-mpd-discplayer false)"
-          fi
-          if echo "${SPOTIFYD_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
-            SPOTIFYD_TESTING="${SPOTIFYD_MANUAL}"
-            SPOTIFYD_STABLE="$(get_latest spotifyd false)"
-          fi
-          if echo "${MYMPD_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
-            MYMPD_TESTING="${MYMPD_MANUAL}"
-            MYMPD_STABLE="$(get_latest odio-mympd false)"
-          fi
-          if echo "${MPDRIS2_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
-            MPDRIS2_TESTING="${MPDRIS2_MANUAL}"
-            MPDRIS2_STABLE="$(get_latest mpDris2 false)"
-          fi
-          if echo "${SNAPCLIENTMPRIS_MANUAL}" | grep -qE -- '-(rc|beta|alpha)'; then
-            SNAPCLIENTMPRIS_TESTING="${SNAPCLIENTMPRIS_MANUAL}"
-            SNAPCLIENTMPRIS_STABLE="$(get_latest snapclientmpris false)"
-          fi
-
-          for var in ODIO_STABLE ODIO_TESTING DISCPLAYER_STABLE DISCPLAYER_TESTING SPOTIFYD_STABLE SPOTIFYD_TESTING MYMPD_STABLE MYMPD_TESTING MPDRIS2_STABLE MPDRIS2_TESTING SNAPCLIENTMPRIS_STABLE SNAPCLIENTMPRIS_TESTING; do
-            echo "${var}=${!var}" >> "$GITHUB_ENV"
-            echo "${var}=${!var}"
-          done
+          ./scripts/build-apt-repo.sh resolve \
+            ${{ github.event.inputs.odio_version && format('--odio-version {0}', github.event.inputs.odio_version) || '' }} \
+            ${{ github.event.inputs.discplayer_version && format('--discplayer-version {0}', github.event.inputs.discplayer_version) || '' }} \
+            ${{ github.event.inputs.spotifyd_version && format('--spotifyd-version {0}', github.event.inputs.spotifyd_version) || '' }} \
+            ${{ github.event.inputs.mympd_version && format('--mympd-version {0}', github.event.inputs.mympd_version) || '' }} \
+            ${{ github.event.inputs.mpdris2_version && format('--mpdris2-version {0}', github.event.inputs.mpdris2_version) || '' }} \
+            ${{ github.event.inputs.snapclientmpris_version && format('--snapclientmpris-version {0}', github.event.inputs.snapclientmpris_version) || '' }} \
+            | tee -a "$GITHUB_ENV"
 
       - name: Download .deb packages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p debs/stable debs/testing
-
-          download_debs() {
-            local repo="$1" version="$2" target="$3"
-            if [ -z "${version}" ]; then
-              echo "⚠ Skipping ${repo} (${target}): no version"
-              return
-            fi
-            echo "⬇ ${repo} ${version} → ${target}"
-            gh release download "${version}" \
-              --repo "b0bbywan/${repo}" \
-              --pattern "*.deb" \
-              --dir "debs/${target}/" \
-              --clobber
-          }
-
-          download_debs "go-odio-api" "${ODIO_STABLE}" "stable"
-          download_debs "go-odio-api" "${ODIO_TESTING}" "testing"
-          download_debs "go-mpd-discplayer" "${DISCPLAYER_STABLE}" "stable"
-          download_debs "go-mpd-discplayer" "${DISCPLAYER_TESTING}" "testing"
-          download_debs "spotifyd" "${SPOTIFYD_STABLE}" "stable"
-          download_debs "spotifyd" "${SPOTIFYD_TESTING}" "testing"
-          download_debs "odio-mympd" "${MYMPD_STABLE}" "stable"
-          download_debs "odio-mympd" "${MYMPD_TESTING}" "testing"
-          download_debs "mpDris2" "${MPDRIS2_STABLE}" "stable"
-          download_debs "mpDris2" "${MPDRIS2_TESTING}" "testing"
-          download_debs "snapclientmpris" "${SNAPCLIENTMPRIS_STABLE}" "stable"
-          download_debs "snapclientmpris" "${SNAPCLIENTMPRIS_TESTING}" "testing"
-
-          echo "Stable packages:"
-          ls -lh debs/stable/ 2>/dev/null || echo "  (none)"
-          echo "Testing packages:"
-          ls -lh debs/testing/ 2>/dev/null || echo "  (none)"
+        run: ./scripts/build-apt-repo.sh download
 
       - name: Build repository
-        run: |
-          mkdir -p repo
-          cp -r conf repo/
-
-          for deb in debs/stable/*.deb; do
-            [ -f "${deb}" ] || continue
-            echo "Adding $(basename ${deb}) → stable"
-            reprepro -b repo includedeb stable "${deb}"
-          done
-
-          for deb in debs/testing/*.deb; do
-            [ -f "${deb}" ] || continue
-            echo "Adding $(basename ${deb}) → testing"
-            reprepro -b repo includedeb testing "${deb}"
-          done
-
-          # Export public GPG key
-          gpg --armor --export "${GPG_KEY_ID}" > repo/key.gpg
-
-          # CNAME for custom domain
-          echo "apt.odio.love" > repo/CNAME
-
-          cat > repo/index.html <<'HTMLEOF'
-          <!DOCTYPE html>
-          <html><head><title>Odio APT Repository</title></head>
-          <body>
-          <h1>Odio APT Repository</h1>
-          <h2>Stable</h2>
-          <pre><code>curl -fsSL https://apt.odio.love/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/odio.gpg
-          echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love stable main" | sudo tee /etc/apt/sources.list.d/odio.list
-          sudo apt update
-          sudo apt install go-odio-api go-mpd-discplayer</code></pre>
-          <h2>Testing (release candidates)</h2>
-          <pre><code>echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love testing main" | sudo tee /etc/apt/sources.list.d/odio-testing.list</code></pre>
-          </body></html>
-          HTMLEOF
+        run: ./scripts/build-apt-repo.sh build --gpg-key-id "${GPG_KEY_ID}"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
