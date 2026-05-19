@@ -264,33 +264,39 @@ cmd_build_help() {
 Usage: build-apt-repo.sh build --gpg-key-id <ID> [options]
 
 Runs 'reprepro includedeb' for every .deb under <debs-dir>/{stable,testing},
-then exports the public GPG key and writes CNAME + index.html under <repo-dir>.
+then exports the public GPG key and writes CNAME, index.html (rendered from
+README via pandoc), robots.txt, and sitemap.xml under <repo-dir>.
 
 Options:
   --gpg-key-id ID   GPG key id whose public key is exported as key.gpg (required)
   --debs-dir PATH   Input .deb directory (default: ./debs)
   --repo-dir PATH   Output repo directory (default: ./repo)
-  --cname DOMAIN    Value written to <repo-dir>/CNAME (default: ${CNAME_DEFAULT}; empty = skip)
+  --cname DOMAIN    Value written to <repo-dir>/CNAME and used as the host in
+                    sitemap.xml / robots.txt (default: ${CNAME_DEFAULT}; empty = skip CNAME)
+  --readme PATH     Markdown file rendered to <repo-dir>/index.html (default: ./README.md)
 EOF
 }
 
 cmd_build() {
-  local gpg_key_id="" debs_dir="./debs" repo_dir="./repo" cname="${CNAME_DEFAULT}"
+  local gpg_key_id="" debs_dir="./debs" repo_dir="./repo" cname="${CNAME_DEFAULT}" readme="./README.md"
   while [ $# -gt 0 ]; do
     case "$1" in
       --gpg-key-id) gpg_key_id="$2"; shift 2 ;;
       --debs-dir)   debs_dir="$2"; shift 2 ;;
       --repo-dir)   repo_dir="$2"; shift 2 ;;
       --cname)      cname="$2"; shift 2 ;;
+      --readme)     readme="$2"; shift 2 ;;
       -h|--help)    cmd_build_help; return 0 ;;
       *) die "build: unknown option: $1" ;;
     esac
   done
   [ -n "${gpg_key_id}" ] || die "build: --gpg-key-id is required"
-  [ -d conf ] || die "build: ./conf not found (run 'configure' first)"
+  [ -d conf ]        || die "build: ./conf not found (run 'configure' first)"
+  [ -f "${readme}" ] || die "build: readme not found at ${readme}"
 
   command -v reprepro >/dev/null || die "build: reprepro not found in PATH"
   command -v gpg >/dev/null      || die "build: gpg not found in PATH"
+  command -v pandoc >/dev/null   || die "build: pandoc not found in PATH"
 
   mkdir -p "${repo_dir}"
   cp -r conf "${repo_dir}/"
@@ -311,20 +317,54 @@ cmd_build() {
   fi
 
   local host="${cname:-apt.example.invalid}"
-  cat > "${repo_dir}/index.html" <<HTML
-<!DOCTYPE html>
-<html><head><title>Odio APT Repository</title></head>
-<body>
-<h1>Odio APT Repository</h1>
-<h2>Stable</h2>
-<pre><code>curl -fsSL https://${host}/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/odio.gpg
-echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://${host} stable main" | sudo tee /etc/apt/sources.list.d/odio.list
-sudo apt update
-sudo apt install go-odio-api go-mpd-discplayer</code></pre>
-<h2>Testing (release candidates)</h2>
-<pre><code>echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://${host} testing main" | sudo tee /etc/apt/sources.list.d/odio-testing.list</code></pre>
-</body></html>
-HTML
+
+  # Render the README to index.html via pandoc, with a small embedded stylesheet.
+  local header_file
+  header_file="$(mktemp)"
+  cat > "${header_file}" <<'EOF'
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { max-width: 760px; margin: 2rem auto; padding: 0 1rem;
+         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         line-height: 1.6; color: #1a1a1a; }
+  h1, h2, h3 { line-height: 1.25; }
+  pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+  code { background: #f4f4f4; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.9em; }
+  pre code { background: transparent; padding: 0; font-size: 0.85em; }
+  table { border-collapse: collapse; margin: 1rem 0; }
+  th, td { border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }
+  th { background: #f4f4f4; }
+  a { color: #0082FC; }
+  img { max-width: 100%; }
+</style>
+EOF
+  pandoc "${readme}" --standalone \
+    --metadata pagetitle="Odio APT Repository" \
+    --include-in-header "${header_file}" \
+    -o "${repo_dir}/index.html"
+  rm -f "${header_file}"
+
+  # Keep APT internals out of search indexes; expose only the landing page.
+  cat > "${repo_dir}/robots.txt" <<EOF
+User-agent: *
+Disallow: /conf/
+Disallow: /db/
+Disallow: /dists/
+Disallow: /pool/
+
+Sitemap: https://${host}/sitemap.xml
+EOF
+
+  cat > "${repo_dir}/sitemap.xml" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://${host}/</loc>
+    <lastmod>$(date -u +%Y-%m-%d)</lastmod>
+    <changefreq>weekly</changefreq>
+  </url>
+</urlset>
+EOF
 }
 
 # ---------- dispatch ----------
