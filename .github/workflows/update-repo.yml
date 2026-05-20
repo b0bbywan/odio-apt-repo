@@ -31,11 +31,6 @@ on:
   schedule:
     - cron: "0 4 * * 1"  # Monday 4am UTC
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -43,57 +38,27 @@ concurrency:
 jobs:
   build-repo:
     name: Build APT Repository
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Install reprepro and pandoc
-        run: sudo apt-get update && sudo apt-get install -y reprepro pandoc
-
-      - name: Import GPG key
-        run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-          GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format long | grep sec | head -1 | awk '{print $2}' | cut -d'/' -f2)
-          echo "GPG_KEY_ID=${GPG_KEY_ID}" >> "$GITHUB_ENV"
-
-      - name: Configure reprepro
-        run: |
-          ./scripts/build-apt-repo.sh configure \
-            --gpg-key-id "${GPG_KEY_ID}" \
-            --basedir "${GITHUB_WORKSPACE}/repo"
-
-      - name: Resolve versions
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./scripts/build-apt-repo.sh resolve \
-            ${{ github.event.inputs.odio_version && format('--odio-version {0}', github.event.inputs.odio_version) || '' }} \
-            ${{ github.event.inputs.discplayer_version && format('--discplayer-version {0}', github.event.inputs.discplayer_version) || '' }} \
-            ${{ github.event.inputs.spotifyd_version && format('--spotifyd-version {0}', github.event.inputs.spotifyd_version) || '' }} \
-            ${{ github.event.inputs.mympd_version && format('--mympd-version {0}', github.event.inputs.mympd_version) || '' }} \
-            ${{ github.event.inputs.mpdris2_version && format('--mpdris2-version {0}', github.event.inputs.mpdris2_version) || '' }} \
-            ${{ github.event.inputs.snapclientmpris_version && format('--snapclientmpris-version {0}', github.event.inputs.snapclientmpris_version) || '' }} \
-            | tee -a "$GITHUB_ENV"
-
-      - name: Download .deb packages
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/build-apt-repo.sh download
-
-      - name: Build repository
-        run: ./scripts/build-apt-repo.sh build --gpg-key-id "${GPG_KEY_ID}"
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: repo/
+    uses: ./.github/workflows/build-repo.yml
+    permissions:
+      contents: read
+    with:
+      odio_version: ${{ github.event.inputs.odio_version || '' }}
+      discplayer_version: ${{ github.event.inputs.discplayer_version || '' }}
+      spotifyd_version: ${{ github.event.inputs.spotifyd_version || '' }}
+      mympd_version: ${{ github.event.inputs.mympd_version || '' }}
+      mpdris2_version: ${{ github.event.inputs.mpdris2_version || '' }}
+      snapclientmpris_version: ${{ github.event.inputs.snapclientmpris_version || '' }}
+      pages_artifact: true
+    secrets:
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
   deploy:
     name: Deploy to GitHub Pages
     needs: build-repo
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
