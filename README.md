@@ -13,7 +13,7 @@
   <a href="https://docs.odio.love/api/installation/"><img src="https://img.shields.io/badge/Install%20guide-0082FC" alt="Install guide" /></a>   
   </p>
   <p align="center">   
-  Part of the <a href="https://odio.love">odio</a> project — <a href="https://docs.odio.love/api/installation/">full documentation</a>.
+  Part of the <a href="https://odio.love">odio</a> project — <a href="https://docs.odio.love/operations/apt-repository/">full documentation</a>.
   </p>
   <p align="center">
   <a href="https://www.debian.org/"><img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=white" alt="Debian" /></a>
