@@ -1,0 +1,102 @@
+name: Build APT Repository (reusable)
+
+# Reusable build pipeline shared by update-repo.yml (deploy to Pages) and
+# pr-build.yml (download as a plain artifact). Signing the Release files
+# requires the GPG_PRIVATE_KEY secret, so this cannot run on fork PRs.
+
+on:
+  workflow_call:
+    inputs:
+      odio_version:
+        type: string
+        required: false
+        default: ""
+      discplayer_version:
+        type: string
+        required: false
+        default: ""
+      spotifyd_version:
+        type: string
+        required: false
+        default: ""
+      mympd_version:
+        type: string
+        required: false
+        default: ""
+      mpdris2_version:
+        type: string
+        required: false
+        default: ""
+      snapclientmpris_version:
+        type: string
+        required: false
+        default: ""
+      pages_artifact:
+        type: boolean
+        required: false
+        default: false
+        description: "Upload as a Pages artifact (for deploy) instead of a plain build artifact"
+    secrets:
+      GPG_PRIVATE_KEY:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build APT Repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install reprepro and pandoc
+        run: sudo apt-get update && sudo apt-get install -y reprepro pandoc
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+          GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format long | grep sec | head -1 | awk '{print $2}' | cut -d'/' -f2)
+          echo "GPG_KEY_ID=${GPG_KEY_ID}" >> "$GITHUB_ENV"
+
+      - name: Configure reprepro
+        run: |
+          ./scripts/build-apt-repo.sh configure \
+            --gpg-key-id "${GPG_KEY_ID}" \
+            --basedir "${GITHUB_WORKSPACE}/repo"
+
+      - name: Resolve versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./scripts/build-apt-repo.sh resolve \
+            ${{ inputs.odio_version != '' && format('--odio-version {0}', inputs.odio_version) || '' }} \
+            ${{ inputs.discplayer_version != '' && format('--discplayer-version {0}', inputs.discplayer_version) || '' }} \
+            ${{ inputs.spotifyd_version != '' && format('--spotifyd-version {0}', inputs.spotifyd_version) || '' }} \
+            ${{ inputs.mympd_version != '' && format('--mympd-version {0}', inputs.mympd_version) || '' }} \
+            ${{ inputs.mpdris2_version != '' && format('--mpdris2-version {0}', inputs.mpdris2_version) || '' }} \
+            ${{ inputs.snapclientmpris_version != '' && format('--snapclientmpris-version {0}', inputs.snapclientmpris_version) || '' }} \
+            | tee -a "$GITHUB_ENV"
+
+      - name: Download .deb packages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/build-apt-repo.sh download
+
+      - name: Build repository
+        run: ./scripts/build-apt-repo.sh build --gpg-key-id "${GPG_KEY_ID}"
+
+      - name: Upload Pages artifact
+        if: ${{ inputs.pages_artifact }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: repo/
+
+      - name: Upload build artifact
+        if: ${{ !inputs.pages_artifact }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: apt-repo
+          path: repo/

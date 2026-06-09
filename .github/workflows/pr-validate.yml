@@ -1,0 +1,40 @@
+name: PR Validate
+
+on:
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "README.md"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint script and render README
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pandoc and shellcheck
+        run: sudo apt-get update && sudo apt-get install -y pandoc shellcheck
+
+      - name: bash -n (syntax check)
+        run: bash -n scripts/build-apt-repo.sh
+
+      - name: shellcheck
+        run: shellcheck scripts/build-apt-repo.sh
+
+      - name: --help smoke test
+        run: |
+          ./scripts/build-apt-repo.sh --help
+          ./scripts/build-apt-repo.sh configure --help
+          ./scripts/build-apt-repo.sh resolve --help
+          ./scripts/build-apt-repo.sh download --help
+          ./scripts/build-apt-repo.sh build --help
+
+      - name: Render README with pandoc
+        run: pandoc README.md --standalone --metadata pagetitle=test -o /tmp/index.html

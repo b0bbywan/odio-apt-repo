@@ -128,3 +128,20 @@ gh workflow run update-repo.yml \
 ```
 
 If a manually supplied version contains `-rc`, `-beta`, or `-alpha`, it is routed to `testing` and the latest stable for that package is kept in `stable`.
+
+## Build script
+
+The repository-build logic lives in `scripts/build-apt-repo.sh` (called by the workflow):
+
+```
+./scripts/build-apt-repo.sh configure --gpg-key-id "$GPG_KEY_ID"
+./scripts/build-apt-repo.sh resolve [--odio-version vX.Y.Z ...] >> "$GITHUB_ENV"
+./scripts/build-apt-repo.sh download
+./scripts/build-apt-repo.sh build --gpg-key-id "$GPG_KEY_ID"
+```
+
+Run `./scripts/build-apt-repo.sh --help` for full subcommand documentation.
+
+## License
+
+BSD 2-Clause — see [LICENSE](LICENSE).
