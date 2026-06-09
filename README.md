@@ -18,7 +18,8 @@
   <p align="center">
   <a href="https://www.debian.org/"><img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=white" alt="Debian" /></a>
   <a href="https://pages.github.com/"><img src="https://img.shields.io/badge/GitHub%20Pages-181717?logo=githubpages&logoColor=white" alt="GitHub Pages" /></a>
-  <a href="https://github.com/features/actions"><img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" /></a>   
+  <a href="https://github.com/features/actions"><img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" /></a>
+  <a href="https://www.gnu.org/software/bash/"><img src="https://img.shields.io/badge/GNU%20Bash-4EAA25?logo=gnubash&logoColor=white" alt="GNU Bash" /></a>   
   </p>
 
 # Odio APT Repository
