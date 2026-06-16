@@ -75,7 +75,7 @@ Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goe
 4. `reprepro` builds the APT repository metadata for both `stable` and `testing` suites
 5. GitHub Pages serves the result
 
-A weekly scheduled rebuild (Monday 04:00 UTC) catches any missed releases. Thanks to the cache, a rebuild with no new releases re-downloads nothing — keeping source projects' GitHub download counters honest. No binaries stored in git — source projects remain the single source of truth.
+A scheduled rebuild (Monday and Thursday 04:00 UTC) catches any missed releases and keeps the `.deb` cache warm (GitHub evicts caches after 7 days without access). Thanks to the cache, a rebuild with no new releases re-downloads nothing — keeping source projects' GitHub download counters honest. No binaries stored in git — source projects remain the single source of truth.
 
 ## Setup (one-time)
 
