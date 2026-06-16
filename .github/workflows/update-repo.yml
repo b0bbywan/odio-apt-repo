@@ -27,9 +27,9 @@ on:
         description: "snapclientmpris version (e.g. v1.1.0) — leave empty to use latest"
         required: false
 
-  # Rebuild nightly to catch any missed releases
+  # Catch missed releases; twice weekly keeps the .deb cache warm (7-day TTL).
   schedule:
-    - cron: "0 4 * * 1"  # Monday 4am UTC
+    - cron: "0 4 * * 1,4"  # Monday and Thursday 4am UTC
 
 concurrency:
   group: "pages"
