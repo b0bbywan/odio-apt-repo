@@ -68,6 +68,7 @@ jobs:
             --basedir "${GITHUB_WORKSPACE}/repo"
 
       - name: Resolve versions
+        id: resolve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -78,7 +79,18 @@ jobs:
             ${{ inputs.mympd_version != '' && format('--mympd-version {0}', inputs.mympd_version) || '' }} \
             ${{ inputs.mpdris2_version != '' && format('--mpdris2-version {0}', inputs.mpdris2_version) || '' }} \
             ${{ inputs.snapclientmpris_version != '' && format('--snapclientmpris-version {0}', inputs.snapclientmpris_version) || '' }} \
-            | tee -a "$GITHUB_ENV"
+            > resolved-versions.txt
+          cat resolved-versions.txt | tee -a "$GITHUB_ENV"
+          echo "key=$(sha256sum resolved-versions.txt | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      # restore-keys gives a partial restore; 'download' re-fetches only changed packages.
+      - name: Cache .deb packages
+        uses: actions/cache@v4
+        with:
+          path: debs
+          key: debs-${{ steps.resolve.outputs.key }}
+          restore-keys: |
+            debs-
 
       - name: Download .deb packages
         env:

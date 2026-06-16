@@ -71,11 +71,11 @@ Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goe
 
 1. A source project (`go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, or `mpDris2`) publishes a GitHub Release with `.deb` artifacts
 2. Its CI triggers a `repository_dispatch` on this repo
-3. This repo's CI downloads all `.deb` from each source project's latest stable and prerelease tags
+3. This repo's CI downloads the `.deb` from each source project's latest stable and prerelease tags, skipping any release already fetched in a previous run (a cached `debs/` keyed on the resolved versions)
 4. `reprepro` builds the APT repository metadata for both `stable` and `testing` suites
 5. GitHub Pages serves the result
 
-A weekly scheduled rebuild (Monday 04:00 UTC) catches any missed releases. No binaries stored in git — source projects remain the single source of truth.
+A weekly scheduled rebuild (Monday 04:00 UTC) catches any missed releases. Thanks to the cache, a rebuild with no new releases re-downloads nothing — keeping source projects' GitHub download counters honest. No binaries stored in git — source projects remain the single source of truth.
 
 ## Setup (one-time)
 

@@ -209,8 +209,10 @@ cmd_download_help() {
 Usage: build-apt-repo.sh download [--debs-dir <PATH>]
 
 Reads <NAME>_STABLE / <NAME>_TESTING from the environment (set by 'resolve')
-and downloads each *.deb asset into <debs-dir>/stable or <debs-dir>/testing.
-Missing/empty versions are skipped with a warning.
+and downloads each *.deb asset into <debs-dir>/<target>/<repo>/.
+
+Each <repo> dir keeps a .tag file with the last downloaded version; a match
+skips the download (cache-friendly), an empty version clears stale artifacts.
 
 Options:
   --debs-dir PATH   Output directory (default: ./debs)
@@ -231,30 +233,43 @@ cmd_download() {
 
   mkdir -p "${debs_dir}/stable" "${debs_dir}/testing"
 
-  local entry repo name target version_var version
+  local entry repo name target version_var version pkg_dir tag_file
   for entry in "${PACKAGES[@]}"; do
     repo="${entry%%:*}"
     name="${entry##*:}"
     for target in stable testing; do
       version_var="${name}_$(echo "${target}" | tr '[:lower:]' '[:upper:]')"
       version="${!version_var:-}"
+      pkg_dir="${debs_dir}/${target}/${repo}"
+      tag_file="${pkg_dir}/.tag"
+
       if [ -z "${version}" ]; then
         echo "skipping ${repo} (${target}): no version"
+        rm -rf "${pkg_dir}"
         continue
       fi
+
+      if [ -f "${tag_file}" ] && [ "$(cat "${tag_file}")" = "${version}" ]; then
+        echo "cached ${repo} ${version} (${target}), skipping download"
+        continue
+      fi
+
       echo "downloading ${repo} ${version} -> ${target}"
+      rm -rf "${pkg_dir}"
+      mkdir -p "${pkg_dir}"
       gh release download "${version}" \
         --repo "${GH_OWNER}/${repo}" \
         --pattern "*.deb" \
-        --dir "${debs_dir}/${target}/" \
-        --clobber
+        --dir "${pkg_dir}/"
+      echo "${version}" > "${tag_file}"
     done
   done
 
-  echo "stable packages:"
-  ls -lh "${debs_dir}/stable/" 2>/dev/null || echo "  (none)"
-  echo "testing packages:"
-  ls -lh "${debs_dir}/testing/" 2>/dev/null || echo "  (none)"
+  local t
+  for t in stable testing; do
+    echo "${t} packages:"
+    find "${debs_dir}/${t}" -name '*.deb' -printf '  %p\n' 2>/dev/null | sort || echo "  (none)"
+  done
 }
 
 # ---------- build ----------
@@ -263,7 +278,7 @@ cmd_build_help() {
   cat <<EOF
 Usage: build-apt-repo.sh build --gpg-key-id <ID> [options]
 
-Runs 'reprepro includedeb' for every .deb under <debs-dir>/{stable,testing},
+Runs 'reprepro includedeb' for every .deb under <debs-dir>/{stable,testing}/*/,
 then exports the public GPG key and writes CNAME, index.html (rendered from
 README via pandoc), robots.txt, and sitemap.xml under <repo-dir>.
 
@@ -303,7 +318,7 @@ cmd_build() {
 
   local target deb
   for target in stable testing; do
-    for deb in "${debs_dir}/${target}"/*.deb; do
+    for deb in "${debs_dir}/${target}"/*/*.deb; do
       [ -f "${deb}" ] || continue
       echo "adding $(basename "${deb}") -> ${target}"
       reprepro -b "${repo_dir}" includedeb "${target}" "${deb}"
