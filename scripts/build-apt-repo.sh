@@ -14,12 +14,25 @@
 
 set -euo pipefail
 
+# Each entry is "repo:NAME[:TAG[:PATTERN]]":
+#   TAG      pin NAME to a fixed tag in both suites (no resolve); empty = latest.
+#   PATTERN  glob of .deb assets to download (default "*.deb"). Set this when a
+#            repo ships several packages and an entry must take only its own.
+#
+# mpDris2 was renamed to mpd2mpris. Both packages come from the same repo:
+#   - mpd2mpris tracks the latest release but only pulls mpd2mpris_*.deb, so it
+#     downloads nothing until the renamed package is first published (no
+#     fallback to the old mpdris2_*.deb that current releases still ship).
+#   - mpdris2 stays pinned at v0.11.1 (the last tag shipping mpdris2_*.deb) so
+#     `apt install mpdris2` keeps working. Different package names => reprepro
+#     serves both side by side.
 PACKAGES=(
   "go-odio-api:ODIO"
   "go-mpd-discplayer:DISCPLAYER"
   "spotifyd:SPOTIFYD"
   "odio-mympd:MYMPD"
-  "mpDris2:MPDRIS2"
+  "mpd2mpris:MPD2MPRIS::mpd2mpris_*.deb"
+  "mpd2mpris:MPDRIS2:v0.11.1:mpdris2_*.deb"
   "snapclientmpris:SNAPCLIENTMPRIS"
 )
 
@@ -63,6 +76,16 @@ is_prerelease_tag() {
   [[ "$1" =~ -(rc|beta|alpha) ]]
 }
 
+# Count a release's assets whose name matches a simple glob (one '*').
+#   $1 repo (under GH_OWNER)   $2 tag   $3 glob (e.g. "mpd2mpris_*.deb")
+count_assets() {
+  local repo="$1" tag="$2" glob="$3" prefix suffix
+  prefix="${glob%%\**}"
+  suffix="${glob##*\*}"
+  gh release view "${tag}" --repo "${GH_OWNER}/${repo}" --json assets \
+    --jq "[.assets[].name | select(startswith(\"${prefix}\") and endswith(\"${suffix}\"))] | length"
+}
+
 # Map a long flag like --discplayer-version to the NAME used in PACKAGES.
 # Echoes the NAME (e.g. DISCPLAYER) on stdout, or returns 1 if unknown.
 flag_to_name() {
@@ -71,7 +94,7 @@ flag_to_name() {
     --discplayer-version)    echo DISCPLAYER ;;
     --spotifyd-version)      echo SPOTIFYD ;;
     --mympd-version)         echo MYMPD ;;
-    --mpdris2-version)       echo MPDRIS2 ;;
+    --mpd2mpris-version)     echo MPD2MPRIS ;;
     --snapclientmpris-version) echo SNAPCLIENTMPRIS ;;
     *) return 1 ;;
   esac
@@ -155,8 +178,11 @@ Override options (any subset):
   --discplayer-version TAG
   --spotifyd-version TAG
   --mympd-version TAG
-  --mpdris2-version TAG
+  --mpd2mpris-version TAG
   --snapclientmpris-version TAG
+
+Packages pinned in PACKAGES (entries with a trailing :TAG) ignore overrides and
+always resolve to their pinned tag in both stable and testing.
 EOF
 }
 
@@ -179,10 +205,18 @@ cmd_resolve() {
   command -v gh >/dev/null || die "resolve: gh CLI not found in PATH"
   command -v jq >/dev/null || die "resolve: jq not found in PATH"
 
-  local entry repo name manual stable testing
+  local entry repo name pin pattern manual stable testing
   for entry in "${PACKAGES[@]}"; do
-    repo="${entry%%:*}"
-    name="${entry##*:}"
+    IFS=: read -r repo name pin pattern <<< "${entry}"
+
+    # Pinned package: frozen at TAG, served in both suites so it resolves
+    # whichever one a machine has enabled.
+    if [ -n "${pin}" ]; then
+      echo "${name}_STABLE=${pin}"
+      echo "${name}_TESTING=${pin}"
+      continue
+    fi
+
     manual="${MANUAL[${name}]:-}"
 
     if [ -n "${manual}" ] && ! is_prerelease_tag "${manual}"; then
@@ -209,10 +243,16 @@ cmd_download_help() {
 Usage: build-apt-repo.sh download [--debs-dir <PATH>]
 
 Reads <NAME>_STABLE / <NAME>_TESTING from the environment (set by 'resolve')
-and downloads each *.deb asset into <debs-dir>/<target>/<repo>/.
+and downloads each *.deb asset into <debs-dir>/<target>/<name>/.
 
-Each <repo> dir keeps a .tag file with the last downloaded version; a match
-skips the download (cache-friendly), an empty version clears stale artifacts.
+Each dir keeps a .tag file with the last downloaded version; a match skips the
+download (cache-friendly), an empty version clears stale artifacts. Dirs are
+keyed by NAME so two packages from the same repo (e.g. a renamed package and
+its pinned predecessor) download independently.
+
+Only assets matching each entry's PATTERN (default "*.deb", see PACKAGES) are
+fetched; an entry whose pattern matches nothing in its release downloads
+nothing (and caches the tag), instead of falling back to other assets.
 
 Options:
   --debs-dir PATH   Output directory (default: ./debs)
@@ -233,14 +273,38 @@ cmd_download() {
 
   mkdir -p "${debs_dir}/stable" "${debs_dir}/testing"
 
-  local entry repo name target version_var version pkg_dir tag_file
+  # Prune stale package dirs: a restored cache may hold dirs from an older
+  # layout (e.g. keyed by repo) or from a renamed/removed package. Left alone
+  # they get re-included by 'build', so drop anything not in PACKAGES now.
+  local -A valid_dirs=()
+  local pe pname
+  for pe in "${PACKAGES[@]}"; do
+    IFS=: read -r _ pname _ _ <<< "${pe}"
+    valid_dirs["${pname,,}"]=1
+  done
+  local d bn t0
+  for t0 in stable testing; do
+    for d in "${debs_dir}/${t0}"/*/; do
+      [ -d "${d}" ] || continue
+      bn="$(basename "${d}")"
+      if [ -z "${valid_dirs[${bn}]:-}" ]; then
+        echo "pruning stale dir ${d}"
+        rm -rf "${d}"
+      fi
+    done
+  done
+
+  local entry repo name pin pattern dirkey target version_var version pkg_dir tag_file
   for entry in "${PACKAGES[@]}"; do
-    repo="${entry%%:*}"
-    name="${entry##*:}"
+    IFS=: read -r repo name pin pattern <<< "${entry}"
+    pattern="${pattern:-*.deb}"
+    # Key the download dir by NAME, not repo: two entries may share one repo
+    # (e.g. a renamed package tracking latest plus its pinned predecessor).
+    dirkey="${name,,}"
     for target in stable testing; do
       version_var="${name}_$(echo "${target}" | tr '[:lower:]' '[:upper:]')"
       version="${!version_var:-}"
-      pkg_dir="${debs_dir}/${target}/${repo}"
+      pkg_dir="${debs_dir}/${target}/${dirkey}"
       tag_file="${pkg_dir}/.tag"
 
       if [ -z "${version}" ]; then
@@ -254,13 +318,19 @@ cmd_download() {
         continue
       fi
 
-      echo "downloading ${repo} ${version} -> ${target}"
       rm -rf "${pkg_dir}"
       mkdir -p "${pkg_dir}"
-      gh release download "${version}" \
-        --repo "${GH_OWNER}/${repo}" \
-        --pattern "*.deb" \
-        --dir "${pkg_dir}/"
+      if [ "$(count_assets "${repo}" "${version}" "${pattern}")" -gt 0 ]; then
+        echo "downloading ${repo} ${version} [${pattern}] -> ${target}"
+        gh release download "${version}" \
+          --repo "${GH_OWNER}/${repo}" \
+          --pattern "${pattern}" \
+          --dir "${pkg_dir}/"
+      else
+        # No matching asset yet (e.g. a renamed package not published under its
+        # new name yet). Cache the tag so we do not re-query until it changes.
+        echo "no '${pattern}' asset in ${repo} ${version} (${target}), skipping"
+      fi
       echo "${version}" > "${tag_file}"
     done
   done

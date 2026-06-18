@@ -23,7 +23,7 @@ on:
         type: string
         required: false
         default: ""
-      mpdris2_version:
+      mpd2mpris_version:
         type: string
         required: false
         default: ""
@@ -77,7 +77,7 @@ jobs:
             ${{ inputs.discplayer_version != '' && format('--discplayer-version {0}', inputs.discplayer_version) || '' }} \
             ${{ inputs.spotifyd_version != '' && format('--spotifyd-version {0}', inputs.spotifyd_version) || '' }} \
             ${{ inputs.mympd_version != '' && format('--mympd-version {0}', inputs.mympd_version) || '' }} \
-            ${{ inputs.mpdris2_version != '' && format('--mpdris2-version {0}', inputs.mpdris2_version) || '' }} \
+            ${{ inputs.mpd2mpris_version != '' && format('--mpd2mpris-version {0}', inputs.mpd2mpris_version) || '' }} \
             ${{ inputs.snapclientmpris_version != '' && format('--snapclientmpris-version {0}', inputs.snapclientmpris_version) || '' }} \
             > resolved-versions.txt
           cat resolved-versions.txt | tee -a "$GITHUB_ENV"

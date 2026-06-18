@@ -34,7 +34,8 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 | `go-mpd-discplayer` | [b0bbywan/go-mpd-discplayer](https://github.com/b0bbywan/go-mpd-discplayer) |
 | `spotifyd` | [b0bbywan/spotifyd](https://github.com/b0bbywan/spotifyd) |
 | `mympd` | [b0bbywan/odio-mympd](https://github.com/b0bbywan/odio-mympd) (build of upstream [jcorporation/myMPD](https://github.com/jcorporation/myMPD)) |
-| `mpdris2` | [b0bbywan/mpDris2](https://github.com/b0bbywan/mpDris2) |
+| `mpd2mpris` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) (formerly `mpDris2`) — tracks latest |
+| `mpdris2` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) pinned at `v0.11.1` (last release shipping `mpdris2_*.deb`) so `apt install mpdris2` keeps working |
 
 ## User Install
 
@@ -51,7 +52,7 @@ echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love stable 
 
 # Install
 sudo apt update
-sudo apt install go-odio-api go-mpd-discplayer spotifyd mympd mpdris2
+sudo apt install go-odio-api go-mpd-discplayer spotifyd mympd mpd2mpris
 ```
 
 ### Testing (release candidates)
@@ -67,9 +68,14 @@ sudo apt install go-odio-api
 
 Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goes to `stable`.
 
+> **Rename note:** `mpDris2` was renamed to `mpd2mpris`. New installs should use
+> `mpd2mpris`; the `mpdris2` package stays in the repo (pinned at `v0.11.1`, the
+> last release shipping `mpdris2_*.deb`) so existing `apt install mpdris2` setups
+> keep resolving. The two carry different package names, so both coexist.
+
 ## How it works
 
-1. A source project (`go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, or `mpDris2`) publishes a GitHub Release with `.deb` artifacts
+1. A source project (`go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, or `mpd2mpris`) publishes a GitHub Release with `.deb` artifacts
 2. Its CI triggers a `repository_dispatch` on this repo
 3. This repo's CI downloads the `.deb` from each source project's latest stable and prerelease tags, skipping any release already fetched in a previous run (a cached `debs/` keyed on the resolved versions)
 4. `reprepro` builds the APT repository metadata for both `stable` and `testing` suites
@@ -102,7 +108,7 @@ gpg --armor --export-secret-keys "apt@odio.love"
 | Secret | Where | Description |
 |--------|-------|-------------|
 | `GPG_PRIVATE_KEY` | `apt-repo` | GPG private key for signing |
-| `APT_REPO_TOKEN` | `go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `mpDris2` | PAT with `repo` scope to trigger dispatch |
+| `APT_REPO_TOKEN` | `go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `mpd2mpris` | PAT with `repo` scope to trigger dispatch |
 
 ### 3. Enable GitHub Pages
 
@@ -125,7 +131,7 @@ gh workflow run update-repo.yml \
   -f discplayer_version=v0.8.0 \
   -f spotifyd_version=v0.3.5 \
   -f mympd_version=v25.0.1 \
-  -f mpdris2_version=v0.9.2
+  -f mpd2mpris_version=v0.12.0
 ```
 
 If a manually supplied version contains `-rc`, `-beta`, or `-alpha`, it is routed to `testing` and the latest stable for that package is kept in `stable`.
