@@ -85,7 +85,7 @@ jobs:
 
       # restore-keys gives a partial restore; 'download' re-fetches only changed packages.
       - name: Cache .deb packages
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: debs
           key: debs-${{ steps.resolve.outputs.key }}
