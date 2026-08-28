@@ -23,6 +23,10 @@ on:
         type: string
         required: false
         default: ""
+      qbzd_version:
+        type: string
+        required: false
+        default: ""
       mpd2mpris_version:
         type: string
         required: false
@@ -77,6 +81,7 @@ jobs:
             ${{ inputs.discplayer_version != '' && format('--discplayer-version {0}', inputs.discplayer_version) || '' }} \
             ${{ inputs.spotifyd_version != '' && format('--spotifyd-version {0}', inputs.spotifyd_version) || '' }} \
             ${{ inputs.mympd_version != '' && format('--mympd-version {0}', inputs.mympd_version) || '' }} \
+            ${{ inputs.qbzd_version != '' && format('--qbzd-version {0}', inputs.qbzd_version) || '' }} \
             ${{ inputs.mpd2mpris_version != '' && format('--mpd2mpris-version {0}', inputs.mpd2mpris_version) || '' }} \
             ${{ inputs.snapclientmpris_version != '' && format('--snapclientmpris-version {0}', inputs.snapclientmpris_version) || '' }} \
             > resolved-versions.txt

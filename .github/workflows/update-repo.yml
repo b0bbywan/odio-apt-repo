@@ -20,6 +20,9 @@ on:
       mympd_version:
         description: "odio-mympd version (e.g. v25.0.1) — leave empty to use latest"
         required: false
+      qbzd_version:
+        description: "odio-qbz version (e.g. v2.0.2) — leave empty to use latest"
+        required: false
       mpd2mpris_version:
         description: "mpd2mpris version (e.g. v0.11.1) — leave empty to use latest"
         required: false
@@ -46,6 +49,7 @@ jobs:
       discplayer_version: ${{ github.event.inputs.discplayer_version || '' }}
       spotifyd_version: ${{ github.event.inputs.spotifyd_version || '' }}
       mympd_version: ${{ github.event.inputs.mympd_version || '' }}
+      qbzd_version: ${{ github.event.inputs.qbzd_version || '' }}
       mpd2mpris_version: ${{ github.event.inputs.mpd2mpris_version || '' }}
       snapclientmpris_version: ${{ github.event.inputs.snapclientmpris_version || '' }}
       pages_artifact: true

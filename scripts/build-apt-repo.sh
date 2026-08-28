@@ -31,6 +31,7 @@ PACKAGES=(
   "go-mpd-discplayer:DISCPLAYER"
   "spotifyd:SPOTIFYD"
   "odio-mympd:MYMPD"
+  "odio-qbz:QBZD"
   "mpd2mpris:MPD2MPRIS::mpd2mpris_*.deb"
   "mpd2mpris:MPDRIS2:v0.11.1:mpdris2_*.deb"
   "snapclientmpris:SNAPCLIENTMPRIS"
@@ -94,6 +95,7 @@ flag_to_name() {
     --discplayer-version)    echo DISCPLAYER ;;
     --spotifyd-version)      echo SPOTIFYD ;;
     --mympd-version)         echo MYMPD ;;
+    --qbzd-version)          echo QBZD ;;
     --mpd2mpris-version)     echo MPD2MPRIS ;;
     --snapclientmpris-version) echo SNAPCLIENTMPRIS ;;
     *) return 1 ;;
@@ -178,6 +180,7 @@ Override options (any subset):
   --discplayer-version TAG
   --spotifyd-version TAG
   --mympd-version TAG
+  --qbzd-version TAG
   --mpd2mpris-version TAG
   --snapclientmpris-version TAG
 
