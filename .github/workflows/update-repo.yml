@@ -11,6 +11,9 @@ on:
       odio_version:
         description: "go-odio-api version (e.g. v0.9.0) — leave empty to use latest"
         required: false
+      odioctl_version:
+        description: "odioctl version (e.g. v0.1.0) — leave empty to use latest"
+        required: false
       discplayer_version:
         description: "go-mpd-discplayer version (e.g. v0.8.0) — leave empty to use latest"
         required: false
@@ -19,6 +22,9 @@ on:
         required: false
       mympd_version:
         description: "odio-mympd version (e.g. v25.0.1) — leave empty to use latest"
+        required: false
+      qbzd_version:
+        description: "odio-qbz version (e.g. v2.0.2) — leave empty to use latest"
         required: false
       mpd2mpris_version:
         description: "mpd2mpris version (e.g. v0.11.1) — leave empty to use latest"
@@ -43,9 +49,11 @@ jobs:
       contents: read
     with:
       odio_version: ${{ github.event.inputs.odio_version || '' }}
+      odioctl_version: ${{ github.event.inputs.odioctl_version || '' }}
       discplayer_version: ${{ github.event.inputs.discplayer_version || '' }}
       spotifyd_version: ${{ github.event.inputs.spotifyd_version || '' }}
       mympd_version: ${{ github.event.inputs.mympd_version || '' }}
+      qbzd_version: ${{ github.event.inputs.qbzd_version || '' }}
       mpd2mpris_version: ${{ github.event.inputs.mpd2mpris_version || '' }}
       snapclientmpris_version: ${{ github.event.inputs.snapclientmpris_version || '' }}
       pages_artifact: true

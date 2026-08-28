@@ -31,9 +31,11 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 | Package | Source |
 |---------|--------|
 | `go-odio-api` | [b0bbywan/go-odio-api](https://github.com/b0bbywan/go-odio-api) |
+| `odioctl` | [b0bbywan/odioctl](https://github.com/b0bbywan/odioctl) |
 | `go-mpd-discplayer` | [b0bbywan/go-mpd-discplayer](https://github.com/b0bbywan/go-mpd-discplayer) |
 | `spotifyd` | [b0bbywan/spotifyd](https://github.com/b0bbywan/spotifyd) |
 | `mympd` | [b0bbywan/odio-mympd](https://github.com/b0bbywan/odio-mympd) (build of upstream [jcorporation/myMPD](https://github.com/jcorporation/myMPD)) |
+| `qbzd` | [b0bbywan/odio-qbz](https://github.com/b0bbywan/odio-qbz) (daemon-only build of upstream [vicrodh/qbz](https://github.com/vicrodh/qbz)) |
 | `mpd2mpris` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) (formerly `mpDris2`) — tracks latest |
 | `mpdris2` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) pinned at `v0.11.1` (last release shipping `mpdris2_*.deb`) so `apt install mpdris2` keeps working |
 
@@ -75,7 +77,7 @@ Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goe
 
 ## How it works
 
-1. A source project (`go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, or `mpd2mpris`) publishes a GitHub Release with `.deb` artifacts
+1. A source project (`go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, or `mpd2mpris`) publishes a GitHub Release with `.deb` artifacts
 2. Its CI triggers a `repository_dispatch` on this repo
 3. This repo's CI downloads the `.deb` from each source project's latest stable and prerelease tags, skipping any release already fetched in a previous run (a cached `debs/` keyed on the resolved versions)
 4. `reprepro` builds the APT repository metadata for both `stable` and `testing` suites
@@ -108,7 +110,7 @@ gpg --armor --export-secret-keys "apt@odio.love"
 | Secret | Where | Description |
 |--------|-------|-------------|
 | `GPG_PRIVATE_KEY` | `apt-repo` | GPG private key for signing |
-| `APT_REPO_TOKEN` | `go-odio-api`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `mpd2mpris` | PAT with `repo` scope to trigger dispatch |
+| `APT_REPO_TOKEN` | `go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, `mpd2mpris` | PAT with `repo` scope to trigger dispatch |
 
 ### 3. Enable GitHub Pages
 
@@ -128,9 +130,11 @@ Or with specific versions (any subset of inputs):
 ```
 gh workflow run update-repo.yml \
   -f odio_version=v0.9.0 \
+  -f odioctl_version=v0.1.0 \
   -f discplayer_version=v0.8.0 \
   -f spotifyd_version=v0.3.5 \
   -f mympd_version=v25.0.1 \
+  -f qbzd_version=v2.0.2 \
   -f mpd2mpris_version=v0.12.0
 ```
 

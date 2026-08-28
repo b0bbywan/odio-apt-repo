@@ -28,9 +28,11 @@ set -euo pipefail
 #     serves both side by side.
 PACKAGES=(
   "go-odio-api:ODIO"
+  "odioctl:ODIOCTL"
   "go-mpd-discplayer:DISCPLAYER"
   "spotifyd:SPOTIFYD"
   "odio-mympd:MYMPD"
+  "odio-qbz:QBZD"
   "mpd2mpris:MPD2MPRIS::mpd2mpris_*.deb"
   "mpd2mpris:MPDRIS2:v0.11.1:mpdris2_*.deb"
   "snapclientmpris:SNAPCLIENTMPRIS"
@@ -91,9 +93,11 @@ count_assets() {
 flag_to_name() {
   case "$1" in
     --odio-version)          echo ODIO ;;
+    --odioctl-version)       echo ODIOCTL ;;
     --discplayer-version)    echo DISCPLAYER ;;
     --spotifyd-version)      echo SPOTIFYD ;;
     --mympd-version)         echo MYMPD ;;
+    --qbzd-version)          echo QBZD ;;
     --mpd2mpris-version)     echo MPD2MPRIS ;;
     --snapclientmpris-version) echo SNAPCLIENTMPRIS ;;
     *) return 1 ;;
@@ -175,9 +179,11 @@ Suitable for: build-apt-repo.sh resolve ... | tee -a "\$GITHUB_ENV"
 
 Override options (any subset):
   --odio-version TAG
+  --odioctl-version TAG
   --discplayer-version TAG
   --spotifyd-version TAG
   --mympd-version TAG
+  --qbzd-version TAG
   --mpd2mpris-version TAG
   --snapclientmpris-version TAG
 
