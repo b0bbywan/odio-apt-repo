@@ -11,6 +11,9 @@ on:
       odio_version:
         description: "go-odio-api version (e.g. v0.9.0) — leave empty to use latest"
         required: false
+      odioctl_version:
+        description: "odioctl version (e.g. v0.1.0) — leave empty to use latest"
+        required: false
       discplayer_version:
         description: "go-mpd-discplayer version (e.g. v0.8.0) — leave empty to use latest"
         required: false
@@ -46,6 +49,7 @@ jobs:
       contents: read
     with:
       odio_version: ${{ github.event.inputs.odio_version || '' }}
+      odioctl_version: ${{ github.event.inputs.odioctl_version || '' }}
       discplayer_version: ${{ github.event.inputs.discplayer_version || '' }}
       spotifyd_version: ${{ github.event.inputs.spotifyd_version || '' }}
       mympd_version: ${{ github.event.inputs.mympd_version || '' }}

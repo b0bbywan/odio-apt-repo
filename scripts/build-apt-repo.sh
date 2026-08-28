@@ -28,6 +28,7 @@ set -euo pipefail
 #     serves both side by side.
 PACKAGES=(
   "go-odio-api:ODIO"
+  "odioctl:ODIOCTL"
   "go-mpd-discplayer:DISCPLAYER"
   "spotifyd:SPOTIFYD"
   "odio-mympd:MYMPD"
@@ -92,6 +93,7 @@ count_assets() {
 flag_to_name() {
   case "$1" in
     --odio-version)          echo ODIO ;;
+    --odioctl-version)       echo ODIOCTL ;;
     --discplayer-version)    echo DISCPLAYER ;;
     --spotifyd-version)      echo SPOTIFYD ;;
     --mympd-version)         echo MYMPD ;;
@@ -177,6 +179,7 @@ Suitable for: build-apt-repo.sh resolve ... | tee -a "\$GITHUB_ENV"
 
 Override options (any subset):
   --odio-version TAG
+  --odioctl-version TAG
   --discplayer-version TAG
   --spotifyd-version TAG
   --mympd-version TAG

@@ -11,6 +11,10 @@ on:
         type: string
         required: false
         default: ""
+      odioctl_version:
+        type: string
+        required: false
+        default: ""
       discplayer_version:
         type: string
         required: false
@@ -78,6 +82,7 @@ jobs:
         run: |
           ./scripts/build-apt-repo.sh resolve \
             ${{ inputs.odio_version != '' && format('--odio-version {0}', inputs.odio_version) || '' }} \
+            ${{ inputs.odioctl_version != '' && format('--odioctl-version {0}', inputs.odioctl_version) || '' }} \
             ${{ inputs.discplayer_version != '' && format('--discplayer-version {0}', inputs.discplayer_version) || '' }} \
             ${{ inputs.spotifyd_version != '' && format('--spotifyd-version {0}', inputs.spotifyd_version) || '' }} \
             ${{ inputs.mympd_version != '' && format('--mympd-version {0}', inputs.mympd_version) || '' }} \
