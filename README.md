@@ -38,6 +38,7 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 | `qbzd` | [b0bbywan/odio-qbz](https://github.com/b0bbywan/odio-qbz) (daemon-only build of upstream [vicrodh/qbz](https://github.com/vicrodh/qbz)) |
 | `mpd2mpris` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) (formerly `mpDris2`) — tracks latest |
 | `mpdris2` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) pinned at `v0.11.1` (last release shipping `mpdris2_*.deb`) so `apt install mpdris2` keeps working |
+| `fbrowser-kiosk` | [b0bbywan/odio-framebuffer-ui](https://github.com/b0bbywan/odio-framebuffer-ui) (kiosk build of upstream [e1z0/Framebuffer-browser](https://github.com/e1z0/Framebuffer-browser), amd64/arm64 only) |
 
 ## User Install
 
@@ -77,7 +78,7 @@ Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goe
 
 ## How it works
 
-1. A source project (`go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, or `mpd2mpris`) publishes a GitHub Release with `.deb` artifacts
+1. A source project (`go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, `mpd2mpris`, or `odio-framebuffer-ui`) publishes a GitHub Release with `.deb` artifacts
 2. Its CI triggers a `repository_dispatch` on this repo
 3. This repo's CI downloads the `.deb` from each source project's latest stable and prerelease tags, skipping any release already fetched in a previous run (a cached `debs/` keyed on the resolved versions)
 4. `reprepro` builds the APT repository metadata for both `stable` and `testing` suites
@@ -110,7 +111,7 @@ gpg --armor --export-secret-keys "apt@odio.love"
 | Secret | Where | Description |
 |--------|-------|-------------|
 | `GPG_PRIVATE_KEY` | `apt-repo` | GPG private key for signing |
-| `APT_REPO_TOKEN` | `go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, `mpd2mpris` | PAT with `repo` scope to trigger dispatch |
+| `APT_REPO_TOKEN` | `go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, `mpd2mpris`, `odio-framebuffer-ui` | PAT with `repo` scope to trigger dispatch |
 
 ### 3. Enable GitHub Pages
 
@@ -135,7 +136,8 @@ gh workflow run update-repo.yml \
   -f spotifyd_version=v0.3.5 \
   -f mympd_version=v25.0.1 \
   -f qbzd_version=v2.0.2 \
-  -f mpd2mpris_version=v0.12.0
+  -f mpd2mpris_version=v0.12.0 \
+  -f fbrowser_version=v1.0.0+git20260210.4213a69
 ```
 
 If a manually supplied version contains `-rc`, `-beta`, or `-alpha`, it is routed to `testing` and the latest stable for that package is kept in `stable`.

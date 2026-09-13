@@ -39,6 +39,10 @@ on:
         type: string
         required: false
         default: ""
+      fbrowser_version:
+        type: string
+        required: false
+        default: ""
       pages_artifact:
         type: boolean
         required: false
@@ -89,6 +93,7 @@ jobs:
             ${{ inputs.qbzd_version != '' && format('--qbzd-version {0}', inputs.qbzd_version) || '' }} \
             ${{ inputs.mpd2mpris_version != '' && format('--mpd2mpris-version {0}', inputs.mpd2mpris_version) || '' }} \
             ${{ inputs.snapclientmpris_version != '' && format('--snapclientmpris-version {0}', inputs.snapclientmpris_version) || '' }} \
+            ${{ inputs.fbrowser_version != '' && format('--fbrowser-version {0}', inputs.fbrowser_version) || '' }} \
             > resolved-versions.txt
           cat resolved-versions.txt | tee -a "$GITHUB_ENV"
           echo "key=$(sha256sum resolved-versions.txt | cut -c1-16)" >> "$GITHUB_OUTPUT"
