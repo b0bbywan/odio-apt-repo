@@ -36,6 +36,7 @@ PACKAGES=(
   "mpd2mpris:MPD2MPRIS::mpd2mpris_*.deb"
   "mpd2mpris:MPDRIS2:v0.11.1:mpdris2_*.deb"
   "snapclientmpris:SNAPCLIENTMPRIS"
+  "odio-framebuffer-ui:FBROWSER"
 )
 
 GH_OWNER="${GH_OWNER:-b0bbywan}"
@@ -100,6 +101,7 @@ flag_to_name() {
     --qbzd-version)          echo QBZD ;;
     --mpd2mpris-version)     echo MPD2MPRIS ;;
     --snapclientmpris-version) echo SNAPCLIENTMPRIS ;;
+    --fbrowser-version)      echo FBROWSER ;;
     *) return 1 ;;
   esac
 }
@@ -186,6 +188,7 @@ Override options (any subset):
   --qbzd-version TAG
   --mpd2mpris-version TAG
   --snapclientmpris-version TAG
+  --fbrowser-version TAG
 
 Packages pinned in PACKAGES (entries with a trailing :TAG) ignore overrides and
 always resolve to their pinned tag in both stable and testing.

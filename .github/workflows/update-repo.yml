@@ -32,6 +32,9 @@ on:
       snapclientmpris_version:
         description: "snapclientmpris version (e.g. v1.1.0) — leave empty to use latest"
         required: false
+      fbrowser_version:
+        description: "odio-framebuffer-ui version (e.g. v1.0.0+git20260210.4213a69) — leave empty to use latest"
+        required: false
 
   # Catch missed releases; twice weekly keeps the .deb cache warm (7-day TTL).
   schedule:
@@ -56,6 +59,7 @@ jobs:
       qbzd_version: ${{ github.event.inputs.qbzd_version || '' }}
       mpd2mpris_version: ${{ github.event.inputs.mpd2mpris_version || '' }}
       snapclientmpris_version: ${{ github.event.inputs.snapclientmpris_version || '' }}
+      fbrowser_version: ${{ github.event.inputs.fbrowser_version || '' }}
       pages_artifact: true
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
