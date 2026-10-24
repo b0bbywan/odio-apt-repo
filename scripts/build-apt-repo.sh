@@ -37,6 +37,7 @@ PACKAGES=(
   "mpd2mpris:MPDRIS2:v0.11.1:mpdris2_*.deb"
   "snapclientmpris:SNAPCLIENTMPRIS"
   "odio-framebuffer-ui:FBROWSER"
+  "odio-upmpdcli:UPMPDCLI"
 )
 
 GH_OWNER="${GH_OWNER:-b0bbywan}"
@@ -79,6 +80,23 @@ is_prerelease_tag() {
   [[ "$1" =~ -(rc|beta|alpha) ]]
 }
 
+# Tag as a Debian version: drop "v", first "-" becomes "~" so v1.0-rc1 < v1.0.
+tag_to_debver() {
+  sed -E 's/^v//; s/-/~/' <<< "$1"
+}
+
+# Print the higher of two tags (either may be empty).
+newest_tag() {
+  local a="$1" b="$2"
+  [ -n "${a}" ] || { echo "${b}"; return; }
+  [ -n "${b}" ] || { echo "${a}"; return; }
+  if dpkg --compare-versions "$(tag_to_debver "${a}")" ge "$(tag_to_debver "${b}")"; then
+    echo "${a}"
+  else
+    echo "${b}"
+  fi
+}
+
 # Count a release's assets whose name matches a simple glob (one '*').
 #   $1 repo (under GH_OWNER)   $2 tag   $3 glob (e.g. "mpd2mpris_*.deb")
 count_assets() {
@@ -102,6 +120,7 @@ flag_to_name() {
     --mpd2mpris-version)     echo MPD2MPRIS ;;
     --snapclientmpris-version) echo SNAPCLIENTMPRIS ;;
     --fbrowser-version)      echo FBROWSER ;;
+    --upmpdcli-version)      echo UPMPDCLI ;;
     *) return 1 ;;
   esac
 }
@@ -169,9 +188,10 @@ cmd_resolve_help() {
 Usage: build-apt-repo.sh resolve [--<package>-version <TAG>]...
 
 For each package, query GitHub Releases to find the latest stable and the
-latest prerelease tag. If a manual override is supplied and the tag looks
-like a prerelease (-rc/-beta/-alpha), it is routed to testing and stable is
-left as the latest non-prerelease.
+latest prerelease tag. stable gets the latest stable; testing gets whichever
+of the two has the higher version. If a manual override is supplied and the
+tag looks like a prerelease (-rc/-beta/-alpha), it is routed to testing and
+stable is left as the latest non-prerelease.
 
 Prints two lines per package on stdout:
   <NAME>_STABLE=<tag>
@@ -189,6 +209,7 @@ Override options (any subset):
   --mpd2mpris-version TAG
   --snapclientmpris-version TAG
   --fbrowser-version TAG
+  --upmpdcli-version TAG
 
 Packages pinned in PACKAGES (entries with a trailing :TAG) ignore overrides and
 always resolve to their pinned tag in both stable and testing.
@@ -213,6 +234,7 @@ cmd_resolve() {
 
   command -v gh >/dev/null || die "resolve: gh CLI not found in PATH"
   command -v jq >/dev/null || die "resolve: jq not found in PATH"
+  command -v dpkg >/dev/null || die "resolve: dpkg not found in PATH"
 
   local entry repo name pin pattern manual stable testing
   for entry in "${PACKAGES[@]}"; do
@@ -234,10 +256,11 @@ cmd_resolve() {
       stable="$(get_latest "${repo}" false)"
     fi
 
+    # testing carries the newest release, final or not, so it never lags stable.
     if [ -n "${manual}" ] && is_prerelease_tag "${manual}"; then
       testing="${manual}"
     else
-      testing="$(get_latest "${repo}" true)"
+      testing="$(newest_tag "${stable}" "$(get_latest "${repo}" true)")"
     fi
 
     echo "${name}_STABLE=${stable}"
