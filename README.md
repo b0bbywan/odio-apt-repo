@@ -69,7 +69,7 @@ sudo apt update
 sudo apt install go-odio-api
 ```
 
-Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goes to `stable`.
+Tags containing `-rc`, `-beta`, or `-alpha` go to `testing` only. Final releases go to `stable`, and to `testing` too unless a newer prerelease is there, so `testing` never lags `stable`.
 
 > **Rename note:** `mpDris2` was renamed to `mpd2mpris`. New installs should use
 > `mpd2mpris`; the `mpdris2` package stays in the repo (pinned at `v0.11.1`, the
@@ -80,7 +80,7 @@ Tags containing `-rc`, `-beta`, or `-alpha` go to `testing`. Everything else goe
 
 1. A source project (`go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, `mpd2mpris`, or `odio-framebuffer-ui`) publishes a GitHub Release with `.deb` artifacts
 2. Its CI triggers a `repository_dispatch` on this repo
-3. This repo's CI downloads the `.deb` from each source project's latest stable and prerelease tags, skipping any release already fetched in a previous run (a cached `debs/` keyed on the resolved versions)
+3. This repo's CI downloads the `.deb` from each source project's latest stable tag (`stable`) and newest tag, final or prerelease (`testing`), skipping any release already fetched in a previous run (a cached `debs/` keyed on the resolved versions)
 4. `reprepro` builds the APT repository metadata for both `stable` and `testing` suites
 5. GitHub Pages serves the result
 
