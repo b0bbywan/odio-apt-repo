@@ -30,16 +30,16 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 
 | Package | Source |
 |---------|--------|
-| `go-odio-api` | [b0bbywan/go-odio-api](https://github.com/b0bbywan/go-odio-api) |
+| `odio-api` | [b0bbywan/go-odio-api](https://github.com/b0bbywan/go-odio-api) |
 | `odioctl` | [b0bbywan/odioctl](https://github.com/b0bbywan/odioctl) |
-| `go-mpd-discplayer` | [b0bbywan/go-mpd-discplayer](https://github.com/b0bbywan/go-mpd-discplayer) |
+| `mpd-discplayer` | [b0bbywan/go-mpd-discplayer](https://github.com/b0bbywan/go-mpd-discplayer) |
 | `spotifyd` | [b0bbywan/spotifyd](https://github.com/b0bbywan/spotifyd) |
 | `mympd` | [b0bbywan/odio-mympd](https://github.com/b0bbywan/odio-mympd) (build of upstream [jcorporation/myMPD](https://github.com/jcorporation/myMPD)) |
 | `qbzd` | [b0bbywan/odio-qbz](https://github.com/b0bbywan/odio-qbz) (daemon-only build of upstream [vicrodh/qbz](https://github.com/vicrodh/qbz)) |
 | `mpd2mpris` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) (formerly `mpDris2`) — tracks latest |
 | `mpdris2` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) pinned at `v0.11.1` (last release shipping `mpdris2_*.deb`) so `apt install mpdris2` keeps working |
 | `snapclientmpris` | [b0bbywan/snapclientmpris](https://github.com/b0bbywan/snapclientmpris) |
-| `fbrowser-kiosk` | [b0bbywan/odio-framebuffer-ui](https://github.com/b0bbywan/odio-framebuffer-ui) (kiosk build of upstream [e1z0/Framebuffer-browser](https://github.com/e1z0/Framebuffer-browser), amd64/arm64 only) |
+| `odio-kiosk` | [b0bbywan/odio-framebuffer-ui](https://github.com/b0bbywan/odio-framebuffer-ui) (kiosk build of upstream [e1z0/Framebuffer-browser](https://github.com/e1z0/Framebuffer-browser), amd64/arm64 only) |
 | `upmpdcli`, `libupnpp17`, `libnpupnp13`, `upmpdcli-*` plugins | [b0bbywan/odio-upmpdcli](https://github.com/b0bbywan/odio-upmpdcli) (mirror of the upstream trixie builds from [lesbonscomptes.com](https://www.lesbonscomptes.com/upmpdcli/)) |
 
 ## User Install
@@ -57,7 +57,7 @@ echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love stable 
 
 # Install
 sudo apt update
-sudo apt install go-odio-api go-mpd-discplayer spotifyd mympd mpd2mpris
+sudo apt install odio-api mpd-discplayer spotifyd mympd mpd2mpris
 ```
 
 ### Testing (release candidates)
@@ -68,7 +68,7 @@ echo "deb [signed-by=/usr/share/keyrings/odio.gpg] https://apt.odio.love testing
   | sudo tee /etc/apt/sources.list.d/odio-testing.list
 
 sudo apt update
-sudo apt install go-odio-api
+sudo apt install odio-api
 ```
 
 Tags containing `-rc`, `-beta`, or `-alpha` go to `testing` only. Final releases go to `stable`, and to `testing` too unless a newer prerelease is there, so `testing` never lags `stable`.
