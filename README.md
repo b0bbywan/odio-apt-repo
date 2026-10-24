@@ -39,6 +39,7 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 | `mpd2mpris` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) (formerly `mpDris2`) — tracks latest |
 | `mpdris2` | [b0bbywan/mpd2mpris](https://github.com/b0bbywan/mpd2mpris) pinned at `v0.11.1` (last release shipping `mpdris2_*.deb`) so `apt install mpdris2` keeps working |
 | `fbrowser-kiosk` | [b0bbywan/odio-framebuffer-ui](https://github.com/b0bbywan/odio-framebuffer-ui) (kiosk build of upstream [e1z0/Framebuffer-browser](https://github.com/e1z0/Framebuffer-browser), amd64/arm64 only) |
+| `upmpdcli`, `libupnpp17`, `libnpupnp13`, `upmpdcli-*` plugins | [b0bbywan/odio-upmpdcli](https://github.com/b0bbywan/odio-upmpdcli) (mirror of the upstream trixie builds from [lesbonscomptes.com](https://www.lesbonscomptes.com/upmpdcli/)) |
 
 ## User Install
 
