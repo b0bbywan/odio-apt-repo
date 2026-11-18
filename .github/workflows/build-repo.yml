@@ -47,6 +47,10 @@ on:
         type: string
         required: false
         default: ""
+      openaptx_version:
+        type: string
+        required: false
+        default: ""
       pages_artifact:
         type: boolean
         required: false
@@ -99,6 +103,7 @@ jobs:
             ${{ inputs.snapclientmpris_version != '' && format('--snapclientmpris-version {0}', inputs.snapclientmpris_version) || '' }} \
             ${{ inputs.fbrowser_version != '' && format('--fbrowser-version {0}', inputs.fbrowser_version) || '' }} \
             ${{ inputs.upmpdcli_version != '' && format('--upmpdcli-version {0}', inputs.upmpdcli_version) || '' }} \
+            ${{ inputs.openaptx_version != '' && format('--openaptx-version {0}', inputs.openaptx_version) || '' }} \
             > resolved-versions.txt
           cat resolved-versions.txt | tee -a "$GITHUB_ENV"
           echo "key=$(sha256sum resolved-versions.txt | cut -c1-16)" >> "$GITHUB_OUTPUT"
