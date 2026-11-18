@@ -38,6 +38,7 @@ PACKAGES=(
   "snapclientmpris:SNAPCLIENTMPRIS"
   "odio-framebuffer-ui:FBROWSER"
   "odio-upmpdcli:UPMPDCLI"
+  "gstreamer1.0-openaptx:OPENAPTX"
 )
 
 GH_OWNER="${GH_OWNER:-b0bbywan}"
@@ -121,6 +122,7 @@ flag_to_name() {
     --snapclientmpris-version) echo SNAPCLIENTMPRIS ;;
     --fbrowser-version)      echo FBROWSER ;;
     --upmpdcli-version)      echo UPMPDCLI ;;
+    --openaptx-version)      echo OPENAPTX ;;
     *) return 1 ;;
   esac
 }
@@ -210,6 +212,7 @@ Override options (any subset):
   --snapclientmpris-version TAG
   --fbrowser-version TAG
   --upmpdcli-version TAG
+  --openaptx-version TAG
 
 Packages pinned in PACKAGES (entries with a trailing :TAG) ignore overrides and
 always resolve to their pinned tag in both stable and testing.

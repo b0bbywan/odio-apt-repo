@@ -38,6 +38,9 @@ on:
       upmpdcli_version:
         description: "odio-upmpdcli version (e.g. v1.9.17) — leave empty to use latest"
         required: false
+      openaptx_version:
+        description: "gstreamer1.0-openaptx version (e.g. v1.26.2) — leave empty to use latest"
+        required: false
 
   # Catch missed releases; twice weekly keeps the .deb cache warm (7-day TTL).
   schedule:
@@ -64,6 +67,7 @@ jobs:
       snapclientmpris_version: ${{ github.event.inputs.snapclientmpris_version || '' }}
       fbrowser_version: ${{ github.event.inputs.fbrowser_version || '' }}
       upmpdcli_version: ${{ github.event.inputs.upmpdcli_version || '' }}
+      openaptx_version: ${{ github.event.inputs.openaptx_version || '' }}
       pages_artifact: true
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}

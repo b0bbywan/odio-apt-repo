@@ -41,6 +41,7 @@ Automated APT repository for the Odio ecosystem, served via GitHub Pages.
 | `snapclientmpris` | [b0bbywan/snapclientmpris](https://github.com/b0bbywan/snapclientmpris) |
 | `odio-kiosk` | [b0bbywan/odio-framebuffer-ui](https://github.com/b0bbywan/odio-framebuffer-ui) (kiosk build of upstream [e1z0/Framebuffer-browser](https://github.com/e1z0/Framebuffer-browser), amd64/arm64 only) |
 | `upmpdcli`, `libupnpp17`, `libnpupnp13`, `upmpdcli-*` plugins | [b0bbywan/odio-upmpdcli](https://github.com/b0bbywan/odio-upmpdcli) (mirror of the upstream trixie builds from [lesbonscomptes.com](https://www.lesbonscomptes.com/upmpdcli/)) |
+| `gstreamer1.0-openaptx` | [b0bbywan/gstreamer1.0-openaptx](https://github.com/b0bbywan/gstreamer1.0-openaptx) (openaptx plugin of gst-plugins-bad, alone: aptX for PulseAudio; trixie only) |
 
 ## User Install
 
@@ -113,7 +114,7 @@ gpg --armor --export-secret-keys "apt@odio.love"
 | Secret | Where | Description |
 |--------|-------|-------------|
 | `GPG_PRIVATE_KEY` | `apt-repo` | GPG private key for signing |
-| `APT_REPO_TOKEN` | `go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, `mpd2mpris`, `odio-framebuffer-ui` | PAT with `repo` scope to trigger dispatch |
+| `APT_REPO_TOKEN` | `go-odio-api`, `odioctl`, `go-mpd-discplayer`, `spotifyd`, `odio-mympd`, `odio-qbz`, `mpd2mpris`, `odio-framebuffer-ui`, `gstreamer1.0-openaptx` | PAT with `repo` scope to trigger dispatch |
 
 ### 3. Enable GitHub Pages
 
